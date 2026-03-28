@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color-Changing Fish Aquarium</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0a0a1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+    }
+
+    h1 {
+      margin-bottom: 16px;
+      font-size: 1.6rem;
+      letter-spacing: 2px;
+      color: #7ef0ff;
+      text-shadow: 0 0 12px #7ef0ff88;
+    }
+
+    /* ── Aquarium ── */
+    #aquarium {
+      position: relative;
+      width: 700px;
+      max-width: 98vw;
+      height: 380px;
+      background: linear-gradient(180deg, #003d6b 0%, #001f3f 60%, #001020 100%);
+      border-radius: 18px;
+      border: 3px solid #1a6fa0;
+      overflow: hidden;
+      box-shadow: 0 0 40px #00aaff44, inset 0 0 60px #00000088;
+    }
+
+    /* Caustic light rays */
+    #aquarium::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          110deg,
+          transparent 0px,
+          transparent 38px,
+          rgba(120, 220, 255, 0.04) 40px,
+          transparent 42px
+        );
+      pointer-events: none;
+    }
+
+    /* Sandy floor */
+    .sand {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 42px;
+      background: linear-gradient(180deg, #c8a96e 0%, #a07840 100%);
+      border-radius: 0 0 15px 15px;
+    }
+
+    /* Seaweed */
+    .seaweed {
+      position: absolute;
+      bottom: 38px;
+      width: 14px;
+      border-radius: 50% 50% 0 0;
+      transform-origin: bottom center;
+      animation: sway 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes sway {
+      from { transform: rotate(-10deg); }
+      to   { transform: rotate(10deg); }
+    }
+
+    /* Bubbles */
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), rgba(180,230,255,0.15));
+      border: 1px solid rgba(180,230,255,0.5);
+      animation: rise linear infinite;
+    }
+
+    @keyframes rise {
+      0%   { transform: translateY(0) translateX(0); opacity: 0.8; }
+      50%  { transform: translateY(-50%) translateX(8px); opacity: 0.6; }
+      100% { transform: translateY(-110%) translateX(-4px); opacity: 0; }
+    }
+
+    /* ── Fish ── */
+    #fish {
+      position: absolute;
+      top: 50%;
+      left: 60px;
+      transform: translateY(-50%);
+      width: 120px;
+      height: 60px;
+      animation: swim 8s ease-in-out infinite;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+      cursor: pointer;
+      transition: filter 0.3s;
+    }
+
+    #fish:hover {
+      filter: drop-shadow(0 4px 18px rgba(255,255,255,0.3));
+    }
+
+    @keyframes swim {
+      0%   { left: 60px;  top: 50%; transform: translateY(-50%) scaleX(1);  }
+      45%  { left: 520px; top: 38%; transform: translateY(-50%) scaleX(1);  }
+      50%  { left: 520px; top: 38%; transform: translateY(-50%) scaleX(-1); }
+      95%  { left: 60px;  top: 55%; transform: translateY(-50%) scaleX(-1); }
+      100% { left: 60px;  top: 55%; transform: translateY(-50%) scaleX(1);  }
+    }
+
+    /* fish SVG fills controlled via CSS vars */
+    #fish svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Controls ── */
+    #controls {
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .color-section {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .color-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .color-group label {
+      font-size: 0.78rem;
+      letter-spacing: 1px;
+      color: #aadcf5;
+      text-transform: uppercase;
+    }
+
+    .color-group input[type="color"] {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #2a8abf;
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+      padding: 2px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .color-group input[type="color"]:hover {
+      border-color: #7ef0ff;
+      transform: scale(1.1);
+    }
+
+    .preset-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .preset-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+
+    .preset-btn:hover {
+      transform: scale(1.2);
+      border-color: #fff;
+    }
+
+    #hint {
+      font-size: 0.72rem;
+      color: #557a99;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Fish Aquarium</h1>
+
+<div id="aquarium">
+  <!-- Seaweed plants -->
+  <div class="seaweed" style="left:80px; height:70px; background:linear-gradient(#3a9e3a,#2d7a2d); animation-delay:-1s;"></div>
+  <div class="seaweed" style="left:95px; height:50px; background:linear-gradient(#4ab84a,#3a9e3a); animation-delay:-0.4s;"></div>
+  <div class="seaweed" style="left:580px; height:80px; background:linear-gradient(#3a9e3a,#2d7a2d); animation-delay:-2s;"></div>
+  <div class="seaweed" style="left:596px; height:55px; background:linear-gradient(#4ab84a,#3a9e3a); animation-delay:-1.2s;"></div>
+  <div class="seaweed" style="left:340px; height:65px; background:linear-gradient(#3a9e3a,#2d7a2d); animation-delay:-0.8s;"></div>
+
+  <!-- Fish -->
+  <div id="fish">
+    <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+      <!-- Tail -->
+      <polygon id="fish-tail" points="0,10 28,30 0,50" fill="#ff6600" />
+      <!-- Body -->
+      <ellipse id="fish-body" cx="68" cy="30" rx="45" ry="26" fill="#ff8800" />
+      <!-- Belly -->
+      <ellipse id="fish-belly" cx="72" cy="36" rx="30" ry="14" fill="#ffcc66" />
+      <!-- Dorsal fin -->
+      <polygon id="fish-fin-top" points="50,4 70,4 60,16" fill="#ff6600" />
+      <!-- Pectoral fin -->
+      <ellipse id="fish-fin-side" cx="60" cy="40" rx="14" ry="7" fill="#ff6600" transform="rotate(-20,60,40)" />
+      <!-- Eye white -->
+      <circle cx="100" cy="24" r="7" fill="white" />
+      <!-- Pupil -->
+      <circle cx="102" cy="24" r="4" fill="#111" />
+      <!-- Eye shine -->
+      <circle cx="103" cy="22" r="1.5" fill="white" />
+      <!-- Mouth -->
+      <path d="M114,32 Q118,36 114,38" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round" />
+      <!-- Scales hint lines -->
+      <path d="M75,18 Q82,30 75,42" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+      <path d="M62,16 Q70,30 62,44" stroke="rgba(0,0,0,0.12)" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- Sand floor -->
+  <div class="sand"></div>
+</div>
+
+<!-- Controls -->
+<div id="controls">
+  <div class="color-section">
+    <div class="color-group">
+      <label>Body</label>
+      <input type="color" id="bodyColor" value="#ff8800" />
+    </div>
+    <div class="color-group">
+      <label>Fins &amp; Tail</label>
+      <input type="color" id="finColor" value="#ff6600" />
+    </div>
+    <div class="color-group">
+      <label>Belly</label>
+      <input type="color" id="bellyColor" value="#ffcc66" />
+    </div>
+  </div>
+
+  <div class="preset-row">
+    <button class="preset-btn" title="Classic Orange"
+      data-body="#ff8800" data-fin="#ff6600" data-belly="#ffcc66"
+      style="background:#ff8800;"></button>
+    <button class="preset-btn" title="Ocean Blue"
+      data-body="#1a8fe3" data-fin="#0d5fa3" data-belly="#a8d8f0"
+      style="background:#1a8fe3;"></button>
+    <button class="preset-btn" title="Tropical Green"
+      data-body="#2ecc71" data-fin="#1a9f55" data-belly="#a8f0c6"
+      style="background:#2ecc71;"></button>
+    <button class="preset-btn" title="Royal Purple"
+      data-body="#9b59b6" data-fin="#6c3483" data-belly="#d7bde2"
+      style="background:#9b59b6;"></button>
+    <button class="preset-btn" title="Hot Pink"
+      data-body="#e91e8c" data-fin="#ad1466" data-belly="#f9a8d4"
+      style="background:#e91e8c;"></button>
+    <button class="preset-btn" title="Golden"
+      data-body="#f1c40f" data-fin="#d4ac0d" data-belly="#fef9c3"
+      style="background:#f1c40f;"></button>
+    <button class="preset-btn" title="Fire Red"
+      data-body="#e74c3c" data-fin="#b03a2e" data-belly="#f1948a"
+      style="background:#e74c3c;"></button>
+    <button class="preset-btn" title="Midnight"
+      data-body="#2c3e50" data-fin="#1a252f" data-belly="#7f8c8d"
+      style="background:#2c3e50;"></button>
+  </div>
+
+  <p id="hint">Click a preset or use the color pickers to paint your fish</p>
+</div>
+
+<script>
+  // ── Bubble generator ──
+  const aquarium = document.getElementById('aquarium');
+
+  function makeBubble() {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 4 + Math.random() * 10;
+    b.style.width  = size + 'px';
+    b.style.height = size + 'px';
+    b.style.left   = (20 + Math.random() * 660) + 'px';
+    b.style.bottom = '42px';
+    const dur = 3 + Math.random() * 4;
+    b.style.animationDuration = dur + 's';
+    b.style.animationDelay   = (Math.random() * -dur) + 's';
+    aquarium.appendChild(b);
+    setTimeout(() => b.remove(), (dur + 1) * 1000);
+  }
+
+  setInterval(makeBubble, 600);
+
+  // ── Color controls ──
+  const bodyEl   = document.getElementById('fish-body');
+  const finTopEl = document.getElementById('fish-fin-top');
+  const finSideEl= document.getElementById('fish-fin-side');
+  const tailEl   = document.getElementById('fish-tail');
+  const bellyEl  = document.getElementById('fish-belly');
+
+  const bodyPicker  = document.getElementById('bodyColor');
+  const finPicker   = document.getElementById('finColor');
+  const bellyPicker = document.getElementById('bellyColor');
+
+  function applyColors(body, fin, belly) {
+    bodyEl.setAttribute('fill', body);
+    bellyEl.setAttribute('fill', belly);
+    tailEl.setAttribute('fill', fin);
+    finTopEl.setAttribute('fill', fin);
+    finSideEl.setAttribute('fill', fin);
+    bodyPicker.value  = body;
+    finPicker.value   = fin;
+    bellyPicker.value = belly;
+  }
+
+  bodyPicker.addEventListener('input', () =>
+    applyColors(bodyPicker.value, finPicker.value, bellyPicker.value));
+  finPicker.addEventListener('input', () =>
+    applyColors(bodyPicker.value, finPicker.value, bellyPicker.value));
+  bellyPicker.addEventListener('input', () =>
+    applyColors(bodyPicker.value, finPicker.value, bellyPicker.value));
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () =>
+      applyColors(btn.dataset.body, btn.dataset.fin, btn.dataset.belly));
+  });
+</script>
+</body>
+</html>
