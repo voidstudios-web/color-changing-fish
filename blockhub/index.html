@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#2d7ff9">
+<title>Blockhub</title>
+<meta name="description" content="Play blocky browser games, build your own, earn Bux and hang out with friends.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --blue:#2d7ff9; --blue-d:#1a5fd0; --yellow:#ffd23f; --red:#ff4d4d; --green:#22c55e; --purple:#7b2ff7; --orange:#ff8c1a;
+  --ink:#1b1f3b; --ink2:#4a5072; --bg:#eef3ff; --card:#ffffff; --line:#1b1f3b; --soft:#dfe7fb;
+  --r:14px; --shadow:0 5px 0 var(--line);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Fredoka,system-ui,sans-serif;font-size:16px}
+body{min-height:100vh;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+a{color:var(--blue-d)}
+button,input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3{margin:.2em 0 .5em;line-height:1.15}
+h1{font-size:1.6rem} h2{font-size:1.3rem} h3{font-size:1.1rem}
+.muted{color:var(--ink2)} .small{font-size:.85rem} .center{text-align:center}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .grow{flex:1}
+.stack>*+*{margin-top:12px}
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--blue);border-bottom:4px solid var(--line);
+  padding:calc(8px + env(safe-area-inset-top)) 12px 8px;display:flex;align-items:center;gap:10px}
+.logo{font-weight:700;font-size:1.35rem;color:#fff;text-decoration:none;letter-spacing:.5px;display:flex;align-items:center;gap:6px;
+  text-shadow:0 3px 0 var(--line)}
+.logo i{display:inline-block;width:22px;height:22px;background:var(--yellow);border:3px solid var(--line);border-radius:5px;transform:rotate(-8deg)}
+.bux{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--yellow);border:3px solid var(--line);border-radius:999px;
+  padding:3px 12px 3px 5px;font-weight:700;text-decoration:none;color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.coin{width:20px;height:20px;border-radius:50%;background:#ffb703;border:3px solid var(--line);display:inline-block;position:relative}
+.coin:after{content:"B";position:absolute;inset:0;font-size:10px;font-weight:700;display:grid;place-items:center;line-height:1}
+.me{width:38px;height:38px;border-radius:10px;border:3px solid var(--line);background:#fff;overflow:hidden;display:block}
+.me img{width:100%;height:100%;display:block}
+/* bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:4px solid var(--line);display:flex;
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.nav a{flex:1;text-align:center;text-decoration:none;color:var(--ink2);font-weight:600;font-size:.72rem;padding:4px 0;border-radius:10px}
+.nav a svg{display:block;margin:0 auto 2px;width:24px;height:24px}
+.nav a.on{color:var(--blue);background:var(--soft)}
+.dot{display:inline-block;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--red);color:#fff;font-size:.7rem;line-height:16px;vertical-align:top}
+/* layout */
+main{max-width:980px;margin:0 auto;padding:14px 12px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px}
+.card+.card{margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:3px solid var(--line);border-radius:12px;
+  background:var(--blue);color:#fff;font-weight:700;padding:10px 16px;cursor:pointer;box-shadow:0 4px 0 var(--line);
+  text-decoration:none;transition:transform .05s;min-height:44px;user-select:none}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.btn.y{background:var(--yellow);color:var(--ink)} .btn.g{background:var(--green)} .btn.r{background:var(--red)}
+.btn.p{background:var(--purple)} .btn.w{background:#fff;color:var(--ink)} .btn.o{background:var(--orange)}
+.btn.sm{padding:5px 10px;min-height:34px;font-size:.88rem;box-shadow:0 3px 0 var(--line)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.5;pointer-events:none}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=url],textarea,select{
+  width:100%;border:3px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;outline:none;font-size:16px}
+input:focus,textarea:focus,select:focus{border-color:var(--blue)}
+textarea{min-height:90px;resize:vertical}
+label{font-weight:600;display:block;margin-bottom:4px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{white-space:nowrap;border:3px solid var(--line);border-radius:999px;padding:5px 14px;background:#fff;font-weight:600;cursor:pointer;text-decoration:none;color:var(--ink)}
+.tab.on{background:var(--yellow)}
+/* game grid */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.gcard{background:#fff;border:3px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;text-decoration:none;color:var(--ink);display:block}
+.gcard .th{aspect-ratio:4/3;background:var(--soft);border-bottom:3px solid var(--line);overflow:hidden;position:relative}
+.gcard .th img{width:100%;height:100%;object-fit:cover;display:block}
+.gcard .meta{padding:8px 10px}
+.gcard b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{position:absolute;top:6px;left:6px;background:var(--yellow);border:2px solid var(--line);border-radius:8px;font-size:.72rem;font-weight:700;padding:1px 6px}
+.hero{background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;border:3px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero h1{text-shadow:0 3px 0 var(--line)}
+.hero:after{content:"";position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:var(--yellow);border:3px solid var(--line);border-radius:18px;transform:rotate(18deg);opacity:.9}
+.hero>*{position:relative;z-index:1}
+/* play */
+.play{max-width:440px;margin:0 auto}
+.stage{position:relative;border:4px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);background:#000;touch-action:none}
+.stage canvas{display:block;width:100%;height:auto;touch-action:none}
+.over{position:absolute;inset:0;background:rgba(27,31,59,.78);display:grid;place-items:center;color:#fff;text-align:center;padding:20px}
+.over .big{font-size:2.6rem;font-weight:700;text-shadow:0 4px 0 #000}
+.hud{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.score{margin-left:auto;background:#fff;border:3px solid var(--line);border-radius:12px;padding:4px 12px;font-weight:700}
+.pad{display:flex;gap:10px;margin-top:12px}
+.pad .btn{flex:1;font-size:1.3rem;min-height:60px;user-select:none;-webkit-user-select:none}
+/* list items */
+.li{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:2px dashed var(--soft)}
+.li:last-child{border-bottom:0}
+.av{width:44px;height:44px;border-radius:10px;border:3px solid var(--line);background:var(--soft);flex:none;overflow:hidden}
+.av img{width:100%;height:100%;display:block}
+.av.lg{width:110px;height:110px;border-radius:18px}
+.name{font-weight:700;display:inline-flex;align-items:center;gap:4px;text-decoration:none;color:var(--ink)}
+.vbadge{width:16px;height:16px;flex:none}
+.plusb{background:var(--purple);color:#fff;border:2px solid var(--line);border-radius:6px;font-size:.65rem;padding:0 5px;font-weight:700}
+.pill{display:inline-block;border:2px solid var(--line);border-radius:999px;padding:1px 8px;font-size:.75rem;font-weight:700;background:var(--soft)}
+.pill.pending{background:var(--yellow)} .pill.approved,.pill.paid{background:#b7f5c9} .pill.rejected,.pill.refunded{background:#ffc2c2}
+/* chat */
+.chat{display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:320px}
+.msgs{flex:1;overflow-y:auto;padding:6px 2px;display:flex;flex-direction:column;gap:6px}
+.msg{max-width:78%;padding:8px 12px;border:3px solid var(--line);border-radius:14px;background:#fff;word-wrap:break-word;white-space:pre-wrap}
+.msg.me{align-self:flex-end;background:var(--blue);color:#fff}
+/* shop */
+.item{text-align:center}
+.item canvas{width:100%;aspect-ratio:1;background:var(--soft);border-radius:10px;border:3px solid var(--line)}
+/* editor */
+.palette{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.palette button{border:3px solid var(--line);border-radius:10px;padding:6px 10px;font-weight:700;background:#fff;cursor:pointer;display:flex;align-items:center;gap:6px}
+.palette button.on{background:var(--yellow)}
+.palette i{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-radius:4px}
+/* toast + modal */
+#toasts{position:fixed;top:calc(70px + env(safe-area-inset-top));left:0;right:0;z-index:60;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{background:#fff;border:3px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow);font-weight:600;max-width:92vw;animation:pop .2s}
+.toast.err{background:#ffe1e1} .toast.ok{background:#d9fbe5}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(27,31,59,.6);display:flex;align-items:flex-end;justify-content:center}
+.modal .card{width:100%;max-width:520px;border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+@media(min-width:640px){.modal{align-items:center}.modal .card{border-radius:20px}}
+.code{font-family:ui-monospace,Menlo,monospace;background:var(--soft);border:2px solid var(--line);border-radius:8px;padding:4px 8px;word-break:break-all}
+.empty{padding:24px;text-align:center;color:var(--ink2)}
+.stars{color:#ffb703;letter-spacing:1px}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.kv div{background:var(--soft);border:3px solid var(--line);border-radius:12px;padding:8px}
+.kv b{display:block;font-size:1.3rem}
+.post-body{white-space:pre-wrap;word-wrap:break-word}
+.spin{width:28px;height:28px;border:4px solid var(--soft);border-top-color:var(--blue);border-radius:50%;animation:sp 1s linear infinite;margin:30px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.color-row{display:flex;gap:10px;align-items:center}
+.color-row input[type=color]{width:52px;height:44px;border:3px solid var(--line);border-radius:10px;padding:2px;background:#fff}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="#/"><i></i>Blockhub</a>
+  <a class="bux" href="#/bux" id="buxBtn" hidden><span class="coin"></span><span id="buxAmt">0</span></a>
+  <a class="me" href="#/login" id="meBtn" aria-label="Account"></a>
+</header>
+<main id="view"><div class="spin"></div></main>
+<nav class="nav" id="nav">
+  <a href="#/" data-r="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9H3z"/><rect x="9" y="13" width="6" height="7"/></svg>Play</a>
+  <a href="#/create" data-r="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/><path d="M17 3v8M13 7h8"/></svg>Create</a>
+  <a href="#/forum" data-r="forum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><path d="M4 4h16v12H9l-5 4z"/></svg>Forum</a>
+  <a href="#/friends" data-r="friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="3" width="7" height="7"/><path d="M2 21v-4h13v4"/><rect x="15" y="6" width="5" height="5"/><path d="M17 15h5v6"/></svg>Social <span id="unread"></span></a>
+  <a href="#/more" data-r="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>More</a>
+</nav>
+<div id="toasts"></div>
+
+<script>
+/* =====================================================================
+   CONFIG  -  paste your Supabase project URL and anon (public) key here.
+   Leave blank to enter them on the device instead (stored locally).
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL: '',
+  SUPABASE_ANON_KEY: '',
+};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const view = $('#view');
+const fmt = n => Number(n || 0).toLocaleString();
+const money = c => '$' + (c / 100).toFixed(2);
+function ago(t) {
+  const s = (Date.now() - new Date(t)) / 1000;
+  if (s < 60) return 'now';
+  if (s < 3600) return Math.floor(s / 60) + 'm';
+  if (s < 86400) return Math.floor(s / 3600) + 'h';
+  if (s < 604800) return Math.floor(s / 86400) + 'd';
+  return new Date(t).toLocaleDateString();
+}
+function toast(msg, kind = '') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind; t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+const fail = e => { console.error(e); toast(e?.message || String(e), 'err'); };
+function modal(html, onMount) {
+  const m = document.createElement('div');
+  m.className = 'modal';
+  m.innerHTML = `<div class="card">${html}</div>`;
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+  document.body.appendChild(m);
+  const close = () => m.remove();
+  $$('[data-close]', m).forEach(b => b.onclick = close);
+  onMount && onMount(m, close);
+  return close;
+}
+function lsGet(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } }
+function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
+const VBADGE = '<svg class="vbadge" viewBox="0 0 24 24"><path fill="#2d7ff9" stroke="#1b1f3b" stroke-width="2" d="M12 1l3 3h4v4l3 3-3 3v4h-4l-3 3-3-3H5v-4l-3-3 3-3V4h4z"/><path d="M7.5 12l3 3 6-6" fill="none" stroke="#fff" stroke-width="2.5"/></svg>';
+function nameTag(p, link = true) {
+  if (!p) return '<span class="muted">unknown</span>';
+  const inner = `${esc(p.username)}${p.verified ? VBADGE : ''}${p.plus_until && new Date(p.plus_until) > new Date() ? '<span class="plusb">PLUS</span>' : ''}`;
+  return link ? `<a class="name" href="#/u/${encodeURIComponent(p.username)}">${inner}</a>` : `<span class="name">${inner}</span>`;
+}
+const PROFILE_COLS = 'id,username,verified,plus_until,avatar,equipped';
+
+/* =====================================================================
+   STATE + SUPABASE
+   ===================================================================== */
+const S = { sb: null, user: null, profile: null, bux: 0, items: {}, channel: null, unread: 0, chatWith: null, onMsg: null };
+const SB_URL = CONFIG.SUPABASE_URL || lsGet('bh_url', '');
+const SB_KEY = CONFIG.SUPABASE_ANON_KEY || lsGet('bh_key', '');
+if (SB_URL && SB_KEY && window.supabase) {
+  S.sb = window.supabase.createClient(SB_URL, SB_KEY);
+}
+const online = () => !!S.sb;
+async function rpc(fn, args = {}) {
+  const { data, error } = await S.sb.rpc(fn, args);
+  if (error) throw error;
+  return data;
+}
+async function fnCall(action, extra = {}) {
+  const { data, error } = await S.sb.functions.invoke('stripe-api', { body: { action, ...extra } });
+  if (error) {
+    let msg = error.message;
+    try { const b = await error.context.json(); msg = b.error || msg; } catch {}
+    throw new Error(msg);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+function needLogin() {
+  if (!online()) { location.hash = '#/setup'; return true; }
+  if (!S.user) { toast('Sign in to do that'); location.hash = '#/login?next=' + encodeURIComponent(location.hash); return true; }
+  return false;
+}
+
+/* =====================================================================
+   AVATARS (blocky figure drawn on canvas)
+   ===================================================================== */
+const avCache = new Map();
+function drawAvatar(c, size, avatar = {}, equipped = {}, opts = {}) {
+  const s = size / 100;
+  const col = { head: '#ffd23f', torso: '#2d7ff9', legs: '#2b2d42', ...avatar };
+  const it = k => S.items[equipped?.[k]]?.data;
+  const R = (x, y, w, h, f) => { c.fillStyle = f; c.fillRect(x * s, y * s, w * s, h * s); c.lineWidth = 3 * s; c.strokeStyle = '#1b1f3b'; c.strokeRect(x * s, y * s, w * s, h * s); };
+  c.clearRect(0, 0, size, size);
+  if (opts.bg !== false) { c.fillStyle = opts.bg || '#dfe7fb'; c.fillRect(0, 0, size, size); }
+  // legs, arms, torso
+  R(36, 72, 13, 24, col.legs); R(51, 72, 13, 24, col.legs);
+  R(20, 44, 13, 28, col.head); R(67, 44, 13, 28, col.head);
+  R(33, 44, 34, 30, col.torso);
+  const shirt = it('shirt');
+  if (shirt) {
+    c.fillStyle = shirt.color;
+    if (shirt.pattern === 'stripe') for (let i = 0; i < 3; i++) c.fillRect(35 * s, (49 + i * 9) * s, 30 * s, 4 * s);
+    if (shirt.pattern === 'star') { c.beginPath(); for (let i = 0; i < 10; i++) { const a = Math.PI / 5 * i - Math.PI / 2, r = (i % 2 ? 5 : 11) * s; c.lineTo(50 * s + Math.cos(a) * r, 59 * s + Math.sin(a) * r); } c.fill(); }
+    if (shirt.pattern === 'plus') { R(33, 44, 34, 30, shirt.color); c.fillStyle = '#fff'; c.fillRect(47 * s, 50 * s, 6 * s, 18 * s); c.fillRect(41 * s, 56 * s, 18 * s, 6 * s); }
+  }
+  // head
+  R(34, 14, 32, 30, col.head);
+  const face = it('face')?.style || 'smile';
+  c.fillStyle = '#1b1f3b';
+  const eye = (x, y) => c.fillRect(x * s, y * s, 4 * s, 5 * s);
+  if (face === 'cool') { c.fillRect(37 * s, 23 * s, 26 * s, 6 * s); c.fillRect(42 * s, 33 * s, 16 * s, 3 * s); }
+  else if (face === 'robot') { c.fillStyle = '#ff4d4d'; c.fillRect(37 * s, 23 * s, 26 * s, 6 * s); c.fillStyle = '#1b1f3b'; c.fillRect(42 * s, 34 * s, 16 * s, 3 * s); }
+  else {
+    eye(41, 23); if (face === 'wink') c.fillRect(54 * s, 26 * s, 6 * s, 2 * s); else eye(55, 23);
+    c.lineWidth = 3 * s; c.beginPath();
+    if (face === 'grin') { c.fillRect(41 * s, 32 * s, 18 * s, 6 * s); }
+    else { c.arc(50 * s, 31 * s, 7 * s, .15 * Math.PI, .85 * Math.PI); c.stroke(); }
+  }
+  // hat
+  const hat = it('hat');
+  if (hat) {
+    if (hat.shape === 'cap') { R(32, 8, 36, 9, hat.color); R(60, 13, 16, 5, hat.color); }
+    if (hat.shape === 'tophat') { R(30, 10, 40, 6, hat.color); R(37, -6, 26, 17, hat.color); }
+    if (hat.shape === 'crown') { c.fillStyle = hat.color; c.beginPath(); c.moveTo(33 * s, 15 * s); c.lineTo(33 * s, 2 * s); c.lineTo(42 * s, 9 * s); c.lineTo(50 * s, 0); c.lineTo(58 * s, 9 * s); c.lineTo(67 * s, 2 * s); c.lineTo(67 * s, 15 * s); c.closePath(); c.fill(); c.lineWidth = 3 * s; c.stroke(); }
+    if (hat.shape === 'horns') { R(32, 4, 7, 11, hat.color); R(61, 4, 7, 11, hat.color); }
+    if (hat.shape === 'halo') { c.strokeStyle = hat.color; c.lineWidth = 4 * s; c.beginPath(); c.ellipse(50 * s, 6 * s, 16 * s, 4 * s, 0, 0, Math.PI * 2); c.stroke(); }
+  }
+}
+function avatarURL(p, size = 96) {
+  const key = JSON.stringify([p?.avatar, p?.equipped, size, Object.keys(S.items).length]);
+  if (avCache.has(key)) return avCache.get(key);
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  drawAvatar(cv.getContext('2d'), size, p?.avatar || {}, p?.equipped || {});
+  const u = cv.toDataURL(); avCache.set(key, u); return u;
+}
+const avImg = (p, cls = '') => `<span class="av ${cls}"><img alt="" src="${avatarURL(p, cls === 'lg' ? 220 : 96)}"></span>`;
+
+/* =====================================================================
+   GAME ENGINE
+   Every game gets a host `g` with W, H, setScore(n), end(), and returns
+   handlers: update(dt), draw(ctx), down(x,y), move(x,y), up(x,y),
+   key(k, isDown), swipe(dir).
+   ===================================================================== */
+const W = 360, H = 540;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const ri = (a, b) => Math.floor(rnd(a, b + 1));
+const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+function block(c, x, y, w, h, fill, line = 3) {
+  c.fillStyle = fill; c.fillRect(x, y, w, h);
+  c.fillStyle = 'rgba(255,255,255,.28)'; c.fillRect(x, y, w, Math.min(6, h / 3));
+  c.fillStyle = 'rgba(0,0,0,.15)'; c.fillRect(x, y + h - Math.min(5, h / 4), w, Math.min(5, h / 4));
+  if (line) { c.lineWidth = line; c.strokeStyle = '#1b1f3b'; c.strokeRect(x + line / 2, y + line / 2, w - line, h - line); }
+}
+function txt(c, s, x, y, size = 24, color = '#fff', align = 'center') {
+  c.font = `700 ${size}px Fredoka, sans-serif`; c.textAlign = align; c.textBaseline = 'middle';
+  c.lineWidth = Math.max(3, size / 6); c.strokeStyle = '#1b1f3b'; c.strokeText(s, x, y);
+  c.fillStyle = color; c.fillText(s, x, y);
+}
+function sky(c, a = '#7cc6ff', b = '#d6f0ff') { const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, a); gr.addColorStop(1, b); c.fillStyle = gr; c.fillRect(0, 0, W, H); }
+function face(c, x, y, sz) { c.fillStyle = '#1b1f3b'; c.fillRect(x + sz * .25, y + sz * .3, sz * .14, sz * .18); c.fillRect(x + sz * .6, y + sz * .3, sz * .14, sz * .18); c.fillRect(x + sz * .3, y + sz * .65, sz * .4, sz * .08); }
+const COLORS = ['#ff4d4d', '#ff8c1a', '#ffd23f', '#22c55e', '#2d7ff9', '#7b2ff7', '#ff5fa2'];
+
+const GAMES = [
+{ id: 'obby', thumbY: 200, name: 'Obby Runner', desc: 'Tap to jump over blocks and lava. It gets faster.', tag: 'Hot',
+  make(g) {
+    const ground = 440; let p = { x: 70, y: ground - 30, w: 30, h: 30, vy: 0, on: true }, obs = [], t = 0, dist = 0, spawn = 1, scroll = 0;
+    const jump = () => { if (p.on) { p.vy = -600; p.on = false; } };
+    return {
+      down: jump, key: (k, d) => d && [' ', 'ArrowUp', 'w', 'W'].includes(k) && jump(),
+      update(dt) {
+        t += dt; const sp = 230 + t * 6; dist += sp * dt; scroll = (scroll + sp * dt) % 40; g.setScore(Math.floor(dist / 10));
+        p.vy += 1700 * dt; p.y += p.vy * dt; if (p.y >= ground - p.h) { p.y = ground - p.h; p.vy = 0; p.on = true; }
+        if ((spawn -= dt) <= 0) {
+          const lava = Math.random() < .3; obs.push(lava ? { x: W + 10, w: ri(40, 70), lava } : { x: W + 10, w: ri(26, 40), h: Math.random() < .4 ? 62 : 32 });
+          spawn = rnd(.75, 1.5) - Math.min(.35, t / 150);
+        }
+        obs.forEach(o => o.x -= sp * dt); obs = obs.filter(o => o.x > -80);
+        for (const o of obs) {
+          if (o.lava ? (p.on && p.x + p.w > o.x + 6 && p.x < o.x + o.w - 6) : hit(p, { x: o.x, y: ground - o.h, w: o.w, h: o.h })) g.end();
+        }
+      },
+      draw(c) {
+        sky(c);
+        for (let i = 0; i < 4; i++) block(c, ((i * 120 - t * 30) % 480 + 480) % 480 - 60, 140 + (i % 2) * 50, 70, 26, '#fff', 0);
+        for (let x = -scroll; x < W; x += 40) block(c, x, ground, 40, 40, '#22c55e'), block(c, x, ground + 40, 40, H, '#a0643c');
+        for (const o of obs) o.lava ? (c.fillStyle = '#ff4d4d', c.fillRect(o.x, ground, o.w, 20), c.fillStyle = '#ffd23f', c.fillRect(o.x, ground, o.w, 5)) : block(c, o.x, ground - o.h, o.w, o.h, '#7b2ff7');
+        block(c, p.x, p.y, p.w, p.h, '#ffd23f'); face(c, p.x, p.y, p.w);
+      } };
+  } },
+{ id: 'bricks', thumbY: 40, name: 'Brick Smash', desc: 'Drag the paddle and smash every brick.',
+  make(g) {
+    let pad = { x: 140, y: 495, w: 80, h: 16 }, ball, bricks, lives = 3, score = 0, level = 1;
+    const reset = () => ball = { x: pad.x + pad.w / 2, y: pad.y - 10, vx: 0, vy: 0, r: 7, stuck: true };
+    const build = () => { bricks = []; for (let r = 0; r < 6; r++) for (let i = 0; i < 7; i++) bricks.push({ x: 12 + i * 48, y: 70 + r * 24, w: 44, h: 20, c: COLORS[r % COLORS.length] }); };
+    build(); reset();
+    const launch = () => { if (ball.stuck) { const sp = 300 + level * 30; ball.vx = rnd(-.5, .5) * sp; ball.vy = -sp; ball.stuck = false; } };
+    const mv = x => pad.x = Math.max(0, Math.min(W - pad.w, x - pad.w / 2));
+    let keyDir = 0;
+    return {
+      down(x) { mv(x); launch(); }, move: mv,
+      key(k, d) { if (k === 'ArrowLeft') keyDir = d ? -1 : 0; if (k === 'ArrowRight') keyDir = d ? 1 : 0; if (k === ' ' && d) launch(); },
+      update(dt) {
+        if (keyDir) mv(pad.x + pad.w / 2 + keyDir * 380 * dt);
+        if (ball.stuck) { ball.x = pad.x + pad.w / 2; return; }
+        ball.x += ball.vx * dt; ball.y += ball.vy * dt;
+        if (ball.x < ball.r || ball.x > W - ball.r) { ball.vx *= -1; ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x)); }
+        if (ball.y < ball.r + 30) { ball.vy = Math.abs(ball.vy); }
+        if (ball.vy > 0 && ball.y + ball.r > pad.y && ball.y < pad.y + pad.h && ball.x > pad.x - 4 && ball.x < pad.x + pad.w + 4) {
+          const sp = Math.hypot(ball.vx, ball.vy), rel = (ball.x - pad.x - pad.w / 2) / (pad.w / 2);
+          ball.vx = sp * rel * .8; ball.vy = -Math.sqrt(sp * sp - ball.vx * ball.vx);
+        }
+        for (const b of bricks) {
+          if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w && ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
+            const ox = Math.min(ball.x + ball.r - b.x, b.x + b.w - ball.x + ball.r), oy = Math.min(ball.y + ball.r - b.y, b.y + b.h - ball.y + ball.r);
+            ox < oy ? ball.vx *= -1 : ball.vy *= -1;
+            b.dead = true; score += 10; g.setScore(score); break;
+          }
+        }
+        bricks = bricks.filter(b => !b.dead);
+        if (!bricks.length) { level++; build(); reset(); }
+        if (ball.y > H + 20) { if (--lives <= 0) g.end(); else reset(); }
+      },
+      draw(c) {
+        sky(c, '#1b1f3b', '#3a2f7a');
+        bricks.forEach(b => block(c, b.x, b.y, b.w, b.h, b.c));
+        block(c, pad.x, pad.y, pad.w, pad.h, '#ffd23f');
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(ball.x, ball.y, ball.r, 0, 7); c.fill(); c.lineWidth = 3; c.strokeStyle = '#1b1f3b'; c.stroke();
+        txt(c, 'Lives ' + lives + '   Lvl ' + level, W / 2, 16, 16);
+        if (ball.stuck) txt(c, 'Tap to launch', W / 2, 400, 22, '#ffd23f');
+      } };
+  } },
+{ id: 'snake', name: 'Snake Blocks', desc: 'Swipe or tap to steer. Eat apples, grow long.',
+  make(g) {
+    const C = 20, cols = 18, rows = 25, oy = 20; let sn = [{ x: 8, y: 12 }, { x: 7, y: 12 }, { x: 6, y: 12 }], dir = { x: 1, y: 0 }, next = dir, food, acc = 0, score = 0, step = .14;
+    const place = () => { do food = { x: ri(0, cols - 1), y: ri(0, rows - 1) }; while (sn.some(s => s.x === food.x && s.y === food.y)); };
+    place();
+    const turn = d => { if (d.x !== -dir.x || d.y !== -dir.y) next = d; };
+    const D = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+    return {
+      swipe: d => turn(D[d]),
+      tap(x, y) { const h = sn[0], hx = h.x * C + C / 2, hy = h.y * C + oy + C / 2; if (dir.x) turn(y < hy ? D.up : D.down); else turn(x < hx ? D.left : D.right); },
+      key(k, d) { const m = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' }[k]; if (d && m) turn(D[m]); },
+      update(dt) {
+        acc += dt; if (acc < step) return; acc = 0; dir = next;
+        const h = { x: sn[0].x + dir.x, y: sn[0].y + dir.y };
+        if (h.x < 0 || h.y < 0 || h.x >= cols || h.y >= rows || sn.some(s => s.x === h.x && s.y === h.y)) return g.end();
+        sn.unshift(h);
+        if (h.x === food.x && h.y === food.y) { score += 10; g.setScore(score); step = Math.max(.065, step - .003); place(); } else sn.pop();
+      },
+      draw(c) {
+        c.fillStyle = '#9be36d'; c.fillRect(0, 0, W, H);
+        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if ((x + y) % 2) { c.fillStyle = '#8ad35d'; c.fillRect(x * C, y * C + oy, C, C); }
+        block(c, food.x * C + 2, food.y * C + oy + 2, C - 4, C - 4, '#ff4d4d', 2);
+        sn.forEach((s, i) => block(c, s.x * C, s.y * C + oy, C, C, i ? '#2d7ff9' : '#ffd23f', 2));
+      } };
+  } },
+{ id: 'hopper', name: 'Sky Hopper', desc: 'Tap to flap through the gaps between towers.',
+  make(g) {
+    let b = { x: 90, y: 250, w: 28, h: 28, vy: 0 }, towers = [], t = 0, spawn = .5, score = 0, started = false;
+    const flap = () => { started = true; b.vy = -400; };
+    return {
+      down: flap, key: (k, d) => d && [' ', 'ArrowUp', 'w'].includes(k) && flap(),
+      update(dt) {
+        t += dt; if (!started) { b.y = 250 + Math.sin(t * 4) * 8; return; }
+        b.vy += 1250 * dt; b.y += b.vy * dt;
+        if ((spawn -= dt) <= 0) { towers.push({ x: W, gap: rnd(110, 380), done: false }); spawn = 1.55; }
+        towers.forEach(o => o.x -= 150 * dt); towers = towers.filter(o => o.x > -70);
+        for (const o of towers) {
+          if (hit(b, { x: o.x, y: 0, w: 60, h: o.gap - 75 }) || hit(b, { x: o.x, y: o.gap + 75, w: 60, h: H })) return g.end();
+          if (!o.done && o.x + 60 < b.x) { o.done = true; g.setScore(++score); }
+        }
+        if (b.y > H - 40 || b.y < -40) g.end();
+      },
+      draw(c) {
+        sky(c, '#5ab9ff', '#ffe9a8');
+        for (const o of towers) { block(c, o.x, -4, 60, o.gap - 71, '#22c55e'); block(c, o.x, o.gap + 75, 60, H, '#22c55e'); }
+        block(c, 0, H - 40, W, 40, '#a0643c');
+        c.save(); c.translate(b.x + 14, b.y + 14); c.rotate(Math.max(-.5, Math.min(1, b.vy / 600))); block(c, -14, -14, 28, 28, '#ff8c1a'); face(c, -14, -14, 28); c.restore();
+        if (!started) txt(c, 'Tap to flap', W / 2, 160, 26, '#ffd23f');
+      } };
+  } },
+{ id: 'stack', name: 'Tower Stack', desc: 'Drop each block right on top. How high can you go?',
+  make(g) {
+    const BH = 26; let stack = [{ x: 80, w: 200 }], cur = { x: 0, w: 200, dir: 1 }, speed = 160, cam = 0, falling = [], score = 0;
+    const drop = () => {
+      const top = stack[stack.length - 1], l = Math.max(cur.x, top.x), r = Math.min(cur.x + cur.w, top.x + top.w);
+      if (r - l <= 0) { falling.push({ ...cur, y: stack.length, vy: 0 }); return g.end(); }
+      if (cur.x < l) falling.push({ x: cur.x, w: l - cur.x, y: stack.length, vy: 0 });
+      if (cur.x + cur.w > r) falling.push({ x: r, w: cur.x + cur.w - r, y: stack.length, vy: 0 });
+      stack.push({ x: l, w: r - l }); g.setScore(++score);
+      speed += 8; cur = { x: Math.random() < .5 ? -r + l : W, w: r - l, dir: 1 }; cur.dir = cur.x < 0 ? 1 : -1;
+    };
+    return {
+      down: drop, key: (k, d) => d && k === ' ' && drop(),
+      update(dt) {
+        cur.x += cur.dir * speed * dt; if (cur.x > W - cur.w + 40) cur.dir = -1; if (cur.x < -40) cur.dir = 1;
+        cam += (Math.max(0, stack.length - 12) * BH - cam) * Math.min(1, dt * 5);
+        falling.forEach(f => { f.vy += 30 * dt; f.y -= f.vy * dt; });
+      },
+      draw(c) {
+        sky(c, '#ff9ecb', '#ffe9a8');
+        const Y = i => H - 40 - (i + 1) * BH + cam;
+        stack.forEach((s, i) => block(c, s.x, Y(i), s.w, BH, COLORS[i % COLORS.length]));
+        falling.forEach(f => block(c, f.x, Y(f.y), f.w, BH, '#999'));
+        block(c, cur.x, Y(stack.length), cur.w, BH, COLORS[stack.length % COLORS.length]);
+        if (score === 0) txt(c, 'Tap to drop', W / 2, 120, 26, '#fff');
+      } };
+  } },
+{ id: 'memory', name: 'Memory Match', desc: 'Flip cards and find all 8 pairs in as few moves as you can.',
+  make(g) {
+    const shapes = []; for (let i = 0; i < 8; i++) shapes.push(i, i);
+    shapes.sort(() => Math.random() - .5);
+    const cards = shapes.map((v, i) => ({ v, x: 18 + (i % 4) * 84, y: 90 + Math.floor(i / 4) * 100, w: 72, h: 88, up: false, done: false }));
+    let open = [], wait = 0, moves = 0, t = 0, matched = 0;
+    return {
+      tap(x, y) {
+        if (wait > 0 || open.length === 2) return;
+        const cd = cards.find(k => !k.up && !k.done && x > k.x && x < k.x + k.w && y > k.y && y < k.y + k.h);
+        if (!cd) return; cd.up = true; open.push(cd);
+        if (open.length === 2) { moves++; if (open[0].v === open[1].v) { open.forEach(k => k.done = true); open = []; matched++; if (matched === 8) { g.setScore(Math.max(50, 1000 - moves * 25 - Math.floor(t) * 4)); g.end(); } } else wait = .7; }
+      },
+      update(dt) { t += dt; if (wait > 0 && (wait -= dt) <= 0) { open.forEach(k => k.up = false); open = []; } g.setScore(Math.max(50, 1000 - moves * 25 - Math.floor(t) * 4)); },
+      draw(c) {
+        sky(c, '#7b2ff7', '#2d7ff9');
+        txt(c, `Moves ${moves}   Time ${Math.floor(t)}s`, W / 2, 50, 20);
+        for (const k of cards) {
+          if (k.up || k.done) {
+            block(c, k.x, k.y, k.w, k.h, k.done ? '#d9fbe5' : '#fff');
+            c.fillStyle = COLORS[k.v % 7]; const cx = k.x + k.w / 2, cy = k.y + k.h / 2;
+            c.beginPath();
+            if (k.v < 2) c.arc(cx, cy, 20, 0, 7); else if (k.v < 4) c.rect(cx - 18, cy - 18, 36, 36); else if (k.v < 6) { c.moveTo(cx, cy - 22); c.lineTo(cx + 22, cy + 18); c.lineTo(cx - 22, cy + 18); } else { c.moveTo(cx, cy - 22); c.lineTo(cx + 20, cy); c.lineTo(cx, cy + 22); c.lineTo(cx - 20, cy); }
+            c.fill(); c.lineWidth = 3; c.strokeStyle = '#1b1f3b'; c.stroke();
+            if (k.v % 2) { c.fillStyle = '#1b1f3b'; c.fillRect(cx - 4, cy - 4, 8, 8); }
+          } else { block(c, k.x, k.y, k.w, k.h, '#ffd23f'); txt(c, '?', k.x + k.w / 2, k.y + k.h / 2, 30, '#fff'); }
+        }
+      } };
+  } },
+{ id: 'blaster', name: 'Space Blaster', desc: 'Drag your ship. It fires on its own. Survive the swarm.',
+  make(g) {
+    let ship = { x: 160, y: 470, w: 40, h: 34 }, shots = [], foes = [], stars = [], t = 0, cd = 0, spawn = 1, lives = 3, score = 0, inv = 0, keyDir = 0;
+    for (let i = 0; i < 40; i++) stars.push({ x: rnd(0, W), y: rnd(0, H), s: rnd(20, 80) });
+    const mv = x => ship.x = Math.max(0, Math.min(W - ship.w, x - ship.w / 2));
+    return {
+      down: mv, move: mv, key(k, d) { if (k === 'ArrowLeft') keyDir = d ? -1 : 0; if (k === 'ArrowRight') keyDir = d ? 1 : 0; },
+      update(dt) {
+        t += dt; inv -= dt; if (keyDir) mv(ship.x + ship.w / 2 + keyDir * 320 * dt);
+        stars.forEach(s => { s.y += s.s * dt; if (s.y > H) s.y = 0; });
+        if ((cd -= dt) <= 0) { shots.push({ x: ship.x + 17, y: ship.y - 10, w: 6, h: 14 }); cd = .22; }
+        if ((spawn -= dt) <= 0) { const big = Math.random() < .2; foes.push({ x: rnd(0, W - 40), y: -40, w: big ? 46 : 32, h: big ? 46 : 32, hp: big ? 3 : 1, vy: rnd(70, 120) + t * 2, vx: rnd(-40, 40), c: COLORS[ri(0, 6)] }); spawn = Math.max(.25, .9 - t / 120); }
+        shots.forEach(s => s.y -= 480 * dt); shots = shots.filter(s => s.y > -20);
+        foes.forEach(f => { f.y += f.vy * dt; f.x += f.vx * dt; if (f.x < 0 || f.x > W - f.w) f.vx *= -1; });
+        for (const f of foes) for (const s of shots) if (!s.dead && hit(s, f)) { s.dead = true; if (--f.hp <= 0) { f.dead = true; score += 10; g.setScore(score); } }
+        for (const f of foes) if (!f.dead && inv <= 0 && hit(f, ship)) { f.dead = true; inv = 1.2; if (--lives <= 0) return g.end(); }
+        shots = shots.filter(s => !s.dead); foes = foes.filter(f => !f.dead && f.y < H + 50);
+      },
+      draw(c) {
+        c.fillStyle = '#0d1030'; c.fillRect(0, 0, W, H); c.fillStyle = '#fff'; stars.forEach(s => c.fillRect(s.x, s.y, 2, 2));
+        shots.forEach(s => block(c, s.x, s.y, s.w, s.h, '#ffd23f', 2));
+        foes.forEach(f => { block(c, f.x, f.y, f.w, f.h, f.c); face(c, f.x, f.y, f.w); });
+        if (inv <= 0 || Math.floor(t * 10) % 2) { block(c, ship.x + 12, ship.y - 8, 16, 14, '#2d7ff9'); block(c, ship.x, ship.y + 4, 40, 26, '#dfe7fb'); }
+        txt(c, 'Lives ' + lives, 50, 20, 16);
+      } };
+  } },
+{ id: 'bonk', name: 'Bonk a Block', desc: 'Bonk the blocks that pop up. Avoid the red bombs. 30 seconds.',
+  make(g) {
+    const holes = []; for (let i = 0; i < 9; i++) holes.push({ x: 30 + (i % 3) * 105, y: 140 + Math.floor(i / 3) * 120, up: 0, kind: 0, hitT: 0 });
+    let t = 30, spawn = .5, score = 0;
+    return {
+      tap(x, y) {
+        for (const h of holes) if (h.up > 0 && x > h.x && x < h.x + 90 && y > h.y - 20 && y < h.y + 90) {
+          score = Math.max(0, score + (h.kind === 2 ? -30 : h.kind === 1 ? 30 : 10)); g.setScore(score); h.up = 0; h.hitT = .25; return;
+        }
+      },
+      update(dt) {
+        if ((t -= dt) <= 0) return g.end();
+        holes.forEach(h => { if (h.up > 0) h.up -= dt; if (h.hitT > 0) h.hitT -= dt; });
+        if ((spawn -= dt) <= 0) { const free = holes.filter(h => h.up <= 0); if (free.length) { const h = free[ri(0, free.length - 1)]; h.up = rnd(.55, 1.1) - (30 - t) / 100; const r = Math.random(); h.kind = r < .12 ? 1 : r < .3 ? 2 : 0; } spawn = Math.max(.25, .7 - (30 - t) / 70); }
+      },
+      draw(c) {
+        sky(c, '#9be36d', '#5bb24a');
+        txt(c, 'Time ' + Math.ceil(t), W / 2, 60, 26, '#ffd23f');
+        for (const h of holes) {
+          c.fillStyle = '#4a2c17'; c.beginPath(); c.ellipse(h.x + 45, h.y + 80, 48, 16, 0, 0, 7); c.fill();
+          if (h.up > 0) { const col = h.kind === 2 ? '#ff4d4d' : h.kind === 1 ? '#ffd23f' : '#2d7ff9'; block(c, h.x + 10, h.y + 6, 70, 70, col); if (h.kind === 2) txt(c, '!', h.x + 45, h.y + 42, 34); else face(c, h.x + 10, h.y + 6, 70); }
+          if (h.hitT > 0) txt(c, 'BONK', h.x + 45, h.y + 20, 22, '#fff');
+        }
+      } };
+  } },
+{ id: 'dodge', name: 'Color Dodge', desc: 'Slide left and right. Dodge falling blocks, grab gold coins.',
+  make(g) {
+    let p = { x: 160, y: 480, w: 36, h: 36 }, rain = [], t = 0, spawn = 0, coins = 0, target = 160, keyDir = 0;
+    const set = x => target = Math.max(0, Math.min(W - p.w, x - p.w / 2));
+    return {
+      down: set, move: set, key(k, d) { if (k === 'ArrowLeft') keyDir = d ? -1 : 0; if (k === 'ArrowRight') keyDir = d ? 1 : 0; },
+      update(dt) {
+        t += dt; if (keyDir) target = Math.max(0, Math.min(W - p.w, p.x + keyDir * 60));
+        p.x += (target - p.x) * Math.min(1, dt * 14);
+        if ((spawn -= dt) <= 0) { const coin = Math.random() < .15; const s = coin ? 24 : ri(26, 50); rain.push({ x: rnd(0, W - s), y: -s, w: s, h: s, vy: rnd(160, 240) + t * 5, coin, c: COLORS[ri(0, 6)] }); spawn = Math.max(.12, .5 - t / 90); }
+        rain.forEach(r => r.y += r.vy * dt);
+        for (const r of rain) if (!r.dead && hit({ x: p.x + 4, y: p.y + 4, w: p.w - 8, h: p.h - 8 }, r)) { if (r.coin) { r.dead = true; coins++; } else return g.end(); }
+        rain = rain.filter(r => !r.dead && r.y < H); g.setScore(Math.floor(t * 10) + coins * 50);
+      },
+      draw(c) {
+        sky(c, '#2b2d42', '#4a5072');
+        rain.forEach(r => r.coin ? (c.fillStyle = '#ffd23f', c.beginPath(), c.arc(r.x + 12, r.y + 12, 11, 0, 7), c.fill(), c.lineWidth = 3, c.strokeStyle = '#1b1f3b', c.stroke()) : block(c, r.x, r.y, r.w, r.h, r.c));
+        block(c, p.x, p.y, p.w, p.h, '#fff'); face(c, p.x, p.y, p.w);
+        block(c, 0, 520, W, 20, '#1b1f3b', 0);
+      } };
+  } },
+{ id: 'duel', name: 'Paddle Duel', desc: 'Beat the bot to 7 points. Drag your paddle at the bottom.',
+  make(g) {
+    let me = { x: 140, y: 500, w: 80, h: 14 }, bot = { x: 140, y: 30, w: 80, h: 14 }, ball, ps = 0, bs = 0, rally = 0, serveT = 1, keyDir = 0;
+    const serve = dir => { ball = { x: W / 2, y: H / 2, vx: rnd(-150, 150), vy: 260 * dir, r: 8 }; serveT = .8; };
+    serve(1);
+    const mv = x => me.x = Math.max(0, Math.min(W - me.w, x - me.w / 2));
+    const score = () => g.setScore(ps * 100 + rally * 5);
+    return {
+      down: mv, move: mv, key(k, d) { if (k === 'ArrowLeft') keyDir = d ? -1 : 0; if (k === 'ArrowRight') keyDir = d ? 1 : 0; },
+      update(dt) {
+        if (keyDir) mv(me.x + me.w / 2 + keyDir * 380 * dt);
+        const aim = ball.x - bot.w / 2 + Math.sin(Date.now() / 400) * 20; bot.x += Math.max(-250 * dt, Math.min(250 * dt, aim - bot.x)); bot.x = Math.max(0, Math.min(W - bot.w, bot.x));
+        if (serveT > 0) { serveT -= dt; return; }
+        ball.x += ball.vx * dt; ball.y += ball.vy * dt;
+        if (ball.x < ball.r || ball.x > W - ball.r) ball.vx *= -1;
+        const bounce = (p, up) => { const rel = (ball.x - p.x - p.w / 2) / (p.w / 2); ball.vx = rel * 280; ball.vy = (up ? -1 : 1) * Math.min(620, Math.abs(ball.vy) * 1.06); };
+        if (ball.vy > 0 && ball.y + ball.r > me.y && ball.y < me.y + me.h && ball.x > me.x - 6 && ball.x < me.x + me.w + 6) { bounce(me, true); rally++; score(); }
+        if (ball.vy < 0 && ball.y - ball.r < bot.y + bot.h && ball.y > bot.y && ball.x > bot.x - 6 && ball.x < bot.x + bot.w + 6) bounce(bot, false);
+        if (ball.y < -20) { ps++; score(); ps >= 7 ? g.end() : serve(1); }
+        if (ball.y > H + 20) { bs++; bs >= 7 ? g.end() : serve(-1); }
+      },
+      draw(c) {
+        sky(c, '#2d7ff9', '#7b2ff7');
+        c.fillStyle = 'rgba(255,255,255,.4)'; for (let x = 0; x < W; x += 24) c.fillRect(x, H / 2 - 2, 14, 4);
+        txt(c, String(bs), W - 30, H / 2 - 30, 34); txt(c, String(ps), W - 30, H / 2 + 30, 34, '#ffd23f');
+        block(c, bot.x, bot.y, bot.w, bot.h, '#ff4d4d'); block(c, me.x, me.y, me.w, me.h, '#ffd23f');
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(ball.x, ball.y, ball.r, 0, 7); c.fill(); c.lineWidth = 3; c.strokeStyle = '#1b1f3b'; c.stroke();
+      } };
+  } },
+{ id: 'miner', name: 'Gem Miner', desc: 'Dig every safe tile. Numbers tell you how many bombs touch it.',
+  make(g) {
+    const cols = 9, rows = 11, C = 38, ox = (W - cols * C) / 2, oy = 50, N = 15;
+    let cells = [], first = true, flag = false, t = 0, opened = 0, done = false;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) cells.push({ x, y, bomb: false, open: false, flag: false, n: 0 });
+    const at = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows ? cells[y * cols + x] : null;
+    const nb = c => { const r = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) { const n = at(c.x + dx, c.y + dy); n && r.push(n); } return r; };
+    const plant = safe => { let k = 0; while (k < N) { const c = cells[ri(0, cells.length - 1)]; if (c.bomb || (Math.abs(c.x - safe.x) <= 1 && Math.abs(c.y - safe.y) <= 1)) continue; c.bomb = true; k++; } cells.forEach(c => c.n = nb(c).filter(n => n.bomb).length); };
+    const reveal = c => { if (c.open || c.flag) return; c.open = true; opened++; if (!c.n && !c.bomb) nb(c).forEach(reveal); };
+    const finish = win => { done = true; cells.forEach(c => c.bomb && (c.open = true)); g.setScore(win ? 1000 + Math.max(0, 600 - Math.floor(t) * 3) : opened * 5); setTimeout(() => g.end(), 700); };
+    return {
+      tap(x, y) {
+        if (done) return;
+        if (y > 480) { flag = !flag; return; }
+        const c = at(Math.floor((x - ox) / C), Math.floor((y - oy) / C)); if (!c || c.open) return;
+        if (flag) { c.flag = !c.flag; return; }
+        if (first) { first = false; plant(c); }
+        if (c.bomb) return finish(false);
+        reveal(c); g.setScore(opened * 5);
+        if (opened === cells.length - N) finish(true);
+      },
+      update(dt) { if (!first && !done) t += dt; },
+      draw(c) {
+        sky(c, '#5c3d2e', '#2b1d14');
+        txt(c, `Bombs ${N}   Time ${Math.floor(t)}s`, W / 2, 24, 18);
+        for (const k of cells) {
+          const x = ox + k.x * C, y = oy + k.y * C;
+          if (!k.open) { block(c, x, y, C, C, (k.x + k.y) % 2 ? '#22c55e' : '#3ad46f', 2); if (k.flag) { c.fillStyle = '#ff4d4d'; c.fillRect(x + 12, y + 8, 14, 10); c.fillStyle = '#1b1f3b'; c.fillRect(x + 11, y + 8, 3, 22); } }
+          else { block(c, x, y, C, C, '#e9d8b4', 2); if (k.bomb) { c.fillStyle = '#1b1f3b'; c.beginPath(); c.arc(x + C / 2, y + C / 2, 10, 0, 7); c.fill(); } else if (k.n) txt(c, String(k.n), x + C / 2, y + C / 2 + 1, 20, ['#2d7ff9', '#22c55e', '#ff4d4d', '#7b2ff7', '#ff8c1a', '#00a3a3', '#1b1f3b', '#888'][k.n - 1]); }
+        }
+        block(c, 90, 490, 180, 40, flag ? '#ff4d4d' : '#ffd23f'); txt(c, flag ? 'Mode: FLAG' : 'Mode: DIG', W / 2, 510, 18);
+      } };
+  } },
+];
+const GAME = Object.fromEntries(GAMES.map(x => [x.id, x]));
+
+/* ---------- Community platformer (made in the creator) ---------- */
+const LW = 12, LH = 18, T = 30;
+const TILES = [
+  { id: 0, name: 'Erase', color: '#ffffff' }, { id: 1, name: 'Block', color: '#2d7ff9' }, { id: 2, name: 'Lava', color: '#ff4d4d' },
+  { id: 3, name: 'Coin', color: '#ffd23f' }, { id: 4, name: 'Goal', color: '#22c55e' }, { id: 5, name: 'Spawn', color: '#ff8c1a' },
+  { id: 6, name: 'Bounce', color: '#ff5fa2' },
+];
+function cleanLevel(level) {
+  let s = String(level?.tiles || '').replace(/[^0-6]/g, '').slice(0, LW * LH);
+  return s.padEnd(LW * LH, '0');
+}
+function defaultLevel() {
+  const a = Array(LW * LH).fill('0');
+  for (let x = 0; x < LW; x++) a[(LH - 1) * LW + x] = '1';
+  a[(LH - 2) * LW + 1] = '5'; a[(LH - 2) * LW + 10] = '4';
+  [[4, 14], [5, 14], [7, 12], [8, 12], [2, 10], [3, 10]].forEach(([x, y]) => a[y * LW + x] = '1');
+  a[13 * LW + 4] = '3'; a[11 * LW + 7] = '3'; a[(LH - 1) * LW + 6] = '2';
+  return { tiles: a.join('') };
+}
+function drawLevel(c, tiles, theme = {}, opts = {}) {
+  sky(c, theme.sky || '#7cc6ff', '#e8f6ff');
+  for (let i = 0; i < tiles.length; i++) {
+    const v = +tiles[i], x = (i % LW) * T, y = Math.floor(i / LW) * T;
+    if (v === 1) block(c, x, y, T, T, theme.block || '#2d7ff9', 2);
+    if (v === 2) { c.fillStyle = '#ff4d4d'; c.fillRect(x, y + 8, T, T - 8); c.fillStyle = '#ffd23f'; c.fillRect(x, y + 8, T, 4); }
+    if (v === 3 && !opts.taken?.has(i)) { c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(x + 15, y + 15, 8, 0, 7); c.fill(); c.lineWidth = 3; c.strokeStyle = '#1b1f3b'; c.stroke(); }
+    if (v === 4) { block(c, x + 4, y + 2, 22, T - 2, '#22c55e', 2); txt(c, 'GO', x + 15, y + 16, 11); }
+    if (v === 5 && opts.edit) { block(c, x + 6, y + 6, 18, 24, '#ff8c1a', 2); }
+    if (v === 6) block(c, x, y + 14, T, 16, '#ff5fa2', 2);
+  }
+  if (opts.edit) { c.strokeStyle = 'rgba(27,31,59,.12)'; c.lineWidth = 1; for (let x = 0; x <= W; x += T) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke(); } for (let y = 0; y <= H; y += T) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); } }
+}
+function makePlatformer(level, theme) {
+  return g => {
+    const tiles = cleanLevel(level), taken = new Set();
+    let si = tiles.indexOf('5'); if (si < 0) si = (LH - 2) * LW + 1;
+    const spawn = { x: (si % LW) * T + 5, y: Math.floor(si / LW) * T + 2 };
+    let p = { ...spawn, w: 20, h: 26, vx: 0, vy: 0, on: false }, t = 0, deaths = 0, coins = 0;
+    const tile = (cx, cy) => (cx < 0 || cx >= LW || cy < 0) ? 1 : cy >= LH ? 0 : +tiles[cy * LW + cx];
+    const solid = v => v === 1 || v === 6;
+    const scoreNow = () => Math.max(10, coins * 100 + Math.max(0, 1000 - Math.floor(t) * 10) - deaths * 20);
+    const die = () => { deaths++; Object.assign(p, spawn, { vx: 0, vy: 0 }); };
+    return {
+      controls: true,
+      update(dt) {
+        t += dt; const k = g.keys;
+        p.vx = ((k.right ? 1 : 0) - (k.left ? 1 : 0)) * 160;
+        if (k.jump && p.on) { p.vy = -540; p.on = false; }
+        p.vy = Math.min(900, p.vy + 1500 * dt);
+        p.x += p.vx * dt;
+        for (const cy of [Math.floor(p.y / T), Math.floor((p.y + p.h - 1) / T)]) {
+          if (p.vx > 0 && solid(tile(Math.floor((p.x + p.w) / T), cy))) p.x = Math.floor((p.x + p.w) / T) * T - p.w - .01;
+          if (p.vx < 0 && solid(tile(Math.floor(p.x / T), cy))) p.x = (Math.floor(p.x / T) + 1) * T;
+        }
+        p.y += p.vy * dt; p.on = false;
+        for (const cx of [Math.floor(p.x / T), Math.floor((p.x + p.w - 1) / T)]) {
+          if (p.vy > 0) { const v = tile(cx, Math.floor((p.y + p.h) / T)); if (solid(v)) { p.y = Math.floor((p.y + p.h) / T) * T - p.h; if (v === 6) p.vy = -820; else { p.vy = 0; p.on = true; } } }
+          else if (p.vy < 0 && solid(tile(cx, Math.floor(p.y / T)))) { p.y = (Math.floor(p.y / T) + 1) * T; p.vy = 0; }
+        }
+        if (p.y > H + 40) return die();
+        for (const [cx, cy] of [[p.x + 3, p.y + 3], [p.x + p.w - 3, p.y + 3], [p.x + 3, p.y + p.h - 2], [p.x + p.w - 3, p.y + p.h - 2]].map(([x, y]) => [Math.floor(x / T), Math.floor(y / T)])) {
+          const v = tile(cx, cy), i = cy * LW + cx;
+          if (v === 2) return die();
+          if (v === 3 && !taken.has(i)) { taken.add(i); coins++; }
+          if (v === 4) { g.setScore(scoreNow()); return g.end(); }
+        }
+        g.setScore(scoreNow());
+      },
+      draw(c) {
+        drawLevel(c, tiles, theme, { taken });
+        block(c, p.x, p.y, p.w, p.h, theme?.player || '#ffd23f', 2); face(c, p.x, p.y + 2, p.w);
+        txt(c, `Coins ${coins}  Deaths ${deaths}  ${Math.floor(t)}s`, W / 2, 14, 13);
+      } };
+  };
+}
+
+/* ---------- Host: runs a game on a canvas ---------- */
+function runGame(canvas, make, { onScore, onEnd } = {}) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  let running = true, ended = false, score = 0, raf, last = performance.now();
+  const g = { W, H, keys: {}, setScore(n) { score = n; onScore && onScore(n); }, end() { if (ended) return; ended = true; running = false; setTimeout(() => onEnd && onEnd(score), 50); } };
+  const game = make(g);
+  const pos = e => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+  let downAt = null, dragging = false;
+  const pd = e => { if (!running) return; e.preventDefault(); canvas.setPointerCapture?.(e.pointerId); const [x, y] = pos(e); downAt = [x, y]; dragging = true; game.down && game.down(x, y); };
+  const pm = e => { if (!running || !dragging) return; const [x, y] = pos(e); game.move && game.move(x, y); };
+  const pu = e => {
+    if (!running || !downAt) return; dragging = false; const [x, y] = pos(e); const dx = x - downAt[0], dy = y - downAt[1];
+    if (Math.hypot(dx, dy) > 24 && game.swipe) game.swipe(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    else game.tap && game.tap(downAt[0], downAt[1]);
+    game.up && game.up(x, y); downAt = null;
+  };
+  canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pm); canvas.addEventListener('pointerup', pu); canvas.addEventListener('pointercancel', () => dragging = false);
+  const keyMap = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'jump', w: 'jump', W: 'jump', ' ': 'jump' };
+  const kd = e => { if (!running) return; if (keyMap[e.key] || e.key.startsWith('Arrow')) e.preventDefault(); if (keyMap[e.key]) g.keys[keyMap[e.key]] = true; game.key && game.key(e.key, true); };
+  const ku = e => { if (keyMap[e.key]) g.keys[keyMap[e.key]] = false; game.key && game.key(e.key, false); };
+  addEventListener('keydown', kd); addEventListener('keyup', ku);
+  const loop = now => {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (running) game.update(dt);
+    game.draw(c);
+    if (running) raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+  return { g, game, stop() { running = false; cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); } };
+}
+
+/* ---------- Thumbnails: simulate a moment of each game ---------- */
+const thumbCache = {};
+function gameThumb(id) {
+  if (thumbCache[id]) return thumbCache[id];
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  const g = { W, H, keys: {}, setScore() {}, end() {} };
+  try { const game = GAME[id].make(g); for (let i = 0; i < 70; i++) game.update(1 / 60); game.draw(c); } catch (e) { c.fillStyle = '#2d7ff9'; c.fillRect(0, 0, W, H); }
+  txt(c, GAME[id].name, W / 2, (GAME[id].thumbY ?? 135) + 230, 34, '#ffd23f');
+  const out = document.createElement('canvas'); out.width = 320; out.height = 240;
+  out.getContext('2d').drawImage(cv, 0, GAME[id].thumbY ?? 135, W, 270, 0, 0, 320, 240);
+  return thumbCache[id] = out.toDataURL('image/jpeg', .8);
+}
+function levelThumb(level, theme) {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  drawLevel(cv.getContext('2d'), cleanLevel(level), theme || {}, { edit: true });
+  const out = document.createElement('canvas'); out.width = 320; out.height = 240;
+  out.getContext('2d').drawImage(cv, 0, 135, W, 270, 0, 0, 320, 240);
+  return out.toDataURL('image/jpeg', .8);
+}
+
+/* =====================================================================
+   ROUTER
+   ===================================================================== */
+let cleanup = [];
+const onLeave = fn => cleanup.push(fn);
+const routes = [
+  [/^\/?$/, viewHome], [/^\/game\/(\w+)$/, viewGame], [/^\/cg\/([\w-]+)$/, viewCommunityGame],
+  [/^\/create(?:\/([\w-]+))?$/, viewCreate], [/^\/forum$/, viewForum], [/^\/post\/(\d+)$/, viewPost],
+  [/^\/shop$/, viewShop], [/^\/avatar$/, viewAvatar], [/^\/bux$/, viewBux], [/^\/plus$/, viewPlus],
+  [/^\/market$/, viewMarket], [/^\/item\/([\w-]+)$/, viewItem], [/^\/sell$/, viewSell], [/^\/orders$/, viewOrders],
+  [/^\/friends$/, viewFriends], [/^\/chat\/([\w-]+)$/, viewChat], [/^\/u\/([^/]+)$/, viewProfile],
+  [/^\/login$/, viewLogin], [/^\/settings$/, viewSettings], [/^\/admin$/, viewAdmin], [/^\/more$/, viewMore], [/^\/setup$/, viewSetup],
+];
+function q(name) { return new URLSearchParams(location.hash.split('?')[1] || '').get(name); }
+async function render() {
+  cleanup.forEach(f => { try { f(); } catch {} }); cleanup = []; S.chatWith = null;
+  const path = (location.hash.slice(1) || '/').split('?')[0];
+  const sect = path.split('/')[1] || 'home';
+  const navMap = { '': 'home', game: 'home', cg: 'home', create: 'create', forum: 'forum', post: 'forum', friends: 'friends', chat: 'friends', u: 'friends' };
+  $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.r === (navMap[sect] ?? (sect === 'home' ? 'home' : 'more'))));
+  for (const [re, fn] of routes) {
+    const m = path.match(re);
+    if (m) {
+      view.innerHTML = '<div class="spin"></div>'; scrollTo(0, 0);
+      try { await fn(...m.slice(1).map(x => x && decodeURIComponent(x))); } catch (e) { fail(e); view.innerHTML = `<div class="card empty">Something broke: ${esc(e.message)}</div>`; }
+      return;
+    }
+  }
+  view.innerHTML = '<div class="card empty">Page not found. <a href="#/">Go home</a></div>';
+}
+addEventListener('hashchange', render);
+
+/* =====================================================================
+   AUTH + SESSION
+   ===================================================================== */
+function paintTop() {
+  $('#buxBtn').hidden = !S.user;
+  $('#buxAmt').textContent = fmt(S.bux);
+  const me = $('#meBtn');
+  if (S.user && S.profile) { me.href = '#/u/' + encodeURIComponent(S.profile.username); me.innerHTML = `<img alt="Me" src="${avatarURL(S.profile, 76)}">`; }
+  else { me.href = '#/login'; me.innerHTML = `<img alt="Sign in" src="${avatarURL({}, 76)}">`; }
+  $('#unread').innerHTML = S.unread ? `<span class="dot">${S.unread}</span>` : '';
+}
+async function loadItems() {
+  if (!online() || Object.keys(S.items).length) return;
+  const { data } = await S.sb.from('shop_items').select('*').eq('active', true).order('price');
+  (data || []).forEach(i => S.items[i.id] = i); avCache.clear();
+}
+async function loadMe() {
+  const [{ data: p, error }, { data: w }] = await Promise.all([
+    S.sb.from('profiles').select('*').eq('id', S.user.id).single(),
+    S.sb.from('wallets').select('bux').eq('user_id', S.user.id).single(),
+  ]);
+  if (error) throw error;
+  S.profile = p; S.bux = w?.bux || 0; paintTop();
+}
+function subscribeMe() {
+  if (S.channel) S.sb.removeChannel(S.channel);
+  const uid = S.user.id;
+  S.channel = S.sb.channel('me-' + uid)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${uid}` }, ({ new: n }) => { if (n?.bux !== undefined) { S.bux = n.bux; paintTop(); } })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient=eq.${uid}` }, ({ new: m }) => {
+      if (S.chatWith === m.sender && S.onMsg) S.onMsg(m);
+      else { S.unread++; paintTop(); toast('New message'); }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friendships', filter: `addressee=eq.${uid}` }, () => toast('New friend request'))
+    .subscribe();
+}
+async function afterAuth(event) {
+  try {
+    await loadItems();
+    if (S.user) {
+      await loadMe();
+      subscribeMe();
+      const { count } = await S.sb.from('messages').select('id', { count: 'exact', head: true }).eq('recipient', S.user.id).is('read_at', null);
+      S.unread = count || 0; paintTop();
+      const ref = lsGet('bh_ref');
+      if (ref) { lsSet('bh_ref', null); rpc('apply_referral', { p_code: ref }).then(r => toast(`Invite bonus: +${r.bonus} Bux`, 'ok')).catch(() => {}); }
+    } else {
+      S.profile = null; S.bux = 0; S.unread = 0;
+      if (S.channel) { S.sb.removeChannel(S.channel); S.channel = null; }
+      paintTop();
+    }
+  } catch (e) { fail(e); }
+  if (event === 'SIGNED_IN' && location.hash.startsWith('#/login')) location.hash = q('next') || '#/';
+  else if (['SIGNED_IN', 'SIGNED_OUT', 'INITIAL_SESSION'].includes(event)) render();
+}
+function boot() {
+  const ref = new URLSearchParams(location.search).get('ref');
+  if (ref) lsSet('bh_ref', ref.toUpperCase());
+  const ck = new URLSearchParams(location.search).get('checkout');
+  if (ck) toast(ck === 'plus' ? 'Welcome to Plus! It activates in a few seconds.' : ck === 'bux' ? 'Payment done. Your gift code appears below shortly.' : 'Payment done. Your order appears shortly.', 'ok');
+  if (ref || ck || new URLSearchParams(location.search).get('connect')) history.replaceState(null, '', location.pathname + location.hash);
+  paintTop();
+  if (!online()) { render(); return; }
+  // Keep the callback synchronous. Database calls inside it can deadlock
+  // the auth client, so defer them with setTimeout.
+  let lastUid;
+  S.sb.auth.onAuthStateChange((event, session) => {
+    S.user = session?.user || null;
+    const uid = S.user?.id || null;
+    // supabase-js re-fires SIGNED_IN when the tab regains focus. Only react
+    // when the signed-in user actually changes, so games are not reset.
+    if (event !== 'INITIAL_SESSION' && uid === lastUid) return;
+    lastUid = uid;
+    setTimeout(() => afterAuth(event), 0);
+  });
+  // Keepalive: ping at most once per 12h per device so the project never idles.
+  const last = +lsGet('bh_ping', 0);
+  if (Date.now() - last > 432e5) { lsSet('bh_ping', String(Date.now())); S.sb.rpc('keepalive').then(() => {}, () => {}); }
+}
+
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+function gameCard(href, img, title, sub, tag) {
+  return `<a class="gcard" href="${href}"><div class="th"><img alt="" loading="lazy" src="${img}">${tag ? `<span class="tag">${esc(tag)}</span>` : ''}</div><div class="meta"><b>${esc(title)}</b><span class="muted small">${sub}</span></div></a>`;
+}
+async function viewHome() {
+  view.innerHTML = `
+  <section class="hero">
+    <h1>${S.profile ? 'Hey ' + esc(S.profile.username) + '!' : 'Play. Build. Hang out.'}</h1>
+    <p>Earn Bux every time you play. Build your own obby and share it with everyone.</p>
+    <div class="row">${S.user ? '<a class="btn y" href="#/create">Build a game</a><a class="btn w" href="#/bux">Get Bux</a>' : '<a class="btn y" href="#/login">Join free</a><a class="btn w" href="#/create">Try the creator</a>'}</div>
+  </section>
+  <h2>Featured games</h2>
+  <div class="grid">${GAMES.map(gm => gameCard('#/game/' + gm.id, gameThumb(gm.id), gm.name, esc(gm.desc.split('.')[0]), gm.tag)).join('')}</div>
+  <h2 style="margin-top:22px">Community games</h2>
+  <div id="cgList"><div class="spin"></div></div>`;
+  if (!online()) { $('#cgList').innerHTML = '<div class="card empty">Connect Supabase to see community games. <a href="#/setup">Set up</a></div>'; return; }
+  const { data, error } = await S.sb.from('community_games').select(`id,title,plays,level,theme,creator:profiles(${PROFILE_COLS})`).eq('published', true).order('plays', { ascending: false }).limit(24);
+  if (error) throw error;
+  $('#cgList').innerHTML = data.length ? `<div class="grid">${data.map(cg => gameCard('#/cg/' + cg.id, levelThumb(cg.level, cg.theme), cg.title, `by ${esc(cg.creator?.username)} · ${fmt(cg.plays)} plays`)).join('')}</div>`
+    : '<div class="card empty">No community games yet. <a href="#/create">Be the first to build one.</a></div>';
+}
+
+function playScreen({ title, back, make, onSubmit, lbGame, extra = '' }) {
+  view.innerHTML = `
+  <div class="play">
+    <div class="hud"><a class="btn w sm" href="${back}">Back</a><b>${esc(title)}</b><span class="score" id="sc">0</span></div>
+    <div class="stage"><canvas id="cv"></canvas><div class="over" id="ov" hidden></div></div>
+    <div id="padWrap"></div>
+    <div class="row" style="margin-top:12px"><button class="btn y grow" id="restart">Restart</button><button class="btn w" id="fs">Full screen</button></div>
+    ${extra}
+    ${lbGame ? '<div class="card" style="margin-top:14px"><h3>Top scores</h3><div id="lb" class="muted">Loading...</div></div>' : ''}
+  </div>`;
+  let host, startedAt;
+  const start = () => {
+    host && host.stop(); $('#ov').hidden = true; $('#sc').textContent = '0'; startedAt = Date.now();
+    host = runGame($('#cv'), make, { onScore: n => $('#sc').textContent = fmt(n), onEnd: finish });
+    if (host.game.controls) {
+      $('#padWrap').innerHTML = `<div class="pad"><button class="btn w" data-k="left">&#9664;</button><button class="btn y" data-k="jump">Jump</button><button class="btn w" data-k="right">&#9654;</button></div>`;
+      $$('#padWrap [data-k]').forEach(b => {
+        const k = b.dataset.k, on = e => { e.preventDefault(); host.g.keys[k] = true; }, off = e => { e.preventDefault(); host.g.keys[k] = false; };
+        b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+        b.addEventListener('contextmenu', e => e.preventDefault());
+      });
+    }
+  };
+  const finish = async score => {
+    const dur = Math.round((Date.now() - startedAt) / 1000);
+    const ov = $('#ov'); if (!ov) return;
+    ov.hidden = false;
+    ov.innerHTML = `<div><div class="big">${fmt(score)}</div><p>Game over</p><p id="rw" class="small">${S.user ? 'Saving score...' : '<a style="color:#ffd23f" href="#/login">Sign in</a> to earn Bux and get on the board.'}</p><button class="btn y" id="again">Play again</button></div>`;
+    $('#again').onclick = start;
+    if (S.user && onSubmit) {
+      try {
+        const r = await onSubmit(score, dur);
+        $('#rw') && ($('#rw').textContent = r.reward > 0 ? `+${r.reward} Bux earned!` : dur < 15 ? 'Play at least 15 seconds to earn Bux.' : 'No Bux this round (cooldown or daily cap).');
+        if (r.balance != null) { S.bux = r.balance; paintTop(); }
+        loadLb();
+      } catch (e) { $('#rw') && ($('#rw').textContent = e.message); }
+    }
+  };
+  const loadLb = async () => {
+    if (!lbGame || !$('#lb')) return;
+    if (!online()) { $('#lb').textContent = 'Connect Supabase to see scores.'; return; }
+    try {
+      const rows = await rpc('leaderboard', { p_game: lbGame });
+      $('#lb').innerHTML = rows.length ? rows.map((r, i) => `<div class="li"><b>#${i + 1}</b><span class="grow">${nameTag(r)}</span><b>${fmt(r.best)}</b></div>`).join('') : 'No scores yet. Be first!';
+    } catch (e) { $('#lb').textContent = e.message; }
+  };
+  $('#restart').onclick = start;
+  $('#fs').onclick = () => { const el = $('.stage'); (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el); };
+  start(); loadLb();
+  onLeave(() => host && host.stop());
+}
+async function viewGame(id) {
+  const gm = GAME[id]; if (!gm) { view.innerHTML = '<div class="card empty">Game not found</div>'; return; }
+  playScreen({ title: gm.name, back: '#/', make: gm.make, lbGame: id,
+    onSubmit: (score, dur) => rpc('submit_score', { p_game: id, p_score: Math.floor(score), p_duration: dur }),
+    extra: `<p class="muted center">${esc(gm.desc)}</p>` });
+}
+async function viewCommunityGame(id) {
+  if (!online()) return viewSetup();
+  const { data: cg, error } = await S.sb.from('community_games').select(`*,creator:profiles(${PROFILE_COLS})`).eq('id', id).single();
+  if (error) throw error;
+  playScreen({ title: cg.title, back: '#/', make: makePlatformer(cg.level, cg.theme),
+    onSubmit: (score, dur) => rpc('submit_community_play', { p_game: id, p_score: Math.floor(score), p_duration: dur }),
+    extra: `<div class="card" style="margin-top:14px"><div class="row">${avImg(cg.creator)}<div class="grow">${nameTag(cg.creator)}<div class="muted small">${fmt(cg.plays)} plays</div></div>${S.user?.id === cg.creator?.id ? `<a class="btn sm" href="#/create/${cg.id}">Edit</a>` : ''}</div>${cg.description ? `<p class="post-body">${esc(cg.description)}</p>` : ''}</div>` });
+}
+
+/* ---------- Creator ---------- */
+let createResume = null;
+async function viewCreate(editId) {
+  const resume = createResume; createResume = null;
+  let level = defaultLevel(), theme = { sky: '#7cc6ff', block: '#2d7ff9', player: '#ffd23f' }, meta = { title: '', description: '' }, mine = [];
+  if (editId && online()) {
+    const { data, error } = await S.sb.from('community_games').select('*').eq('id', editId).single();
+    if (error) throw error;
+    level = { tiles: cleanLevel(data.level) }; theme = { ...theme, ...data.theme }; meta = data;
+  } else {
+    const draft = lsGet('bh_draft'); if (draft) try { const d = JSON.parse(draft); level = { tiles: cleanLevel(d.level) }; theme = { ...theme, ...d.theme }; } catch {}
+  }
+  if (resume) { level = { tiles: resume.tiles }; theme = resume.theme; meta = { ...meta, title: resume.title, description: resume.description }; }
+  if (S.user) { const { data } = await S.sb.from('community_games').select('id,title,plays,published').eq('creator', S.user.id).order('updated_at', { ascending: false }); mine = data || []; }
+  let tiles = level.tiles.split(''), tool = 1, testing = null;
+  view.innerHTML = `
+  <h1>${editId ? 'Edit game' : 'Game creator'}</h1>
+  <p class="muted">Paint a one-screen obby. Place one spawn and one goal. Coins add to the score, lava resets you, pink pads bounce you high.</p>
+  <div class="play">
+    <div class="palette" id="pal">${TILES.map(t => `<button data-t="${t.id}" class="${t.id === tool ? 'on' : ''}"><i style="background:${t.color}"></i>${t.name}</button>`).join('')}</div>
+    <div class="stage" id="edStage"><canvas id="ed"></canvas></div>
+    <div class="row" style="margin-top:12px"><button class="btn g grow" id="test">Test play</button><button class="btn w" id="clear">Clear</button></div>
+    <div class="card" style="margin-top:14px">
+      <div class="row"><div class="color-row"><input type="color" id="cSky" value="${esc(theme.sky)}"><span>Sky</span></div><div class="color-row"><input type="color" id="cBlock" value="${esc(theme.block)}"><span>Blocks</span></div><div class="color-row"><input type="color" id="cPlayer" value="${esc(theme.player)}"><span>Player</span></div></div>
+      <div style="margin-top:12px"><label for="gTitle">Title</label><input type="text" id="gTitle" maxlength="40" value="${esc(meta.title)}" placeholder="Lava Tower Escape"></div>
+      <div style="margin-top:10px"><label for="gDesc">Description</label><textarea id="gDesc" maxlength="300" placeholder="Tell players what to do">${esc(meta.description || '')}</textarea></div>
+      <div class="row" style="margin-top:12px"><button class="btn y grow" id="pub">${editId ? 'Save changes' : 'Publish to hub'}</button>${editId ? '<button class="btn r" id="del">Delete</button>' : ''}</div>
+    </div>
+    ${mine.length ? `<div class="card"><h3>My games</h3>${mine.map(m => `<div class="li"><a class="grow name" href="#/cg/${m.id}">${esc(m.title)}</a><span class="muted small">${fmt(m.plays)} plays</span><a class="btn sm w" href="#/create/${m.id}">Edit</a></div>`).join('')}</div>` : ''}
+  </div>`;
+  const cv = $('#ed'), dpr = Math.min(2, devicePixelRatio || 1); cv.width = W * dpr; cv.height = H * dpr;
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const th = () => ({ sky: $('#cSky').value, block: $('#cBlock').value, player: $('#cPlayer').value });
+  const paint = () => drawLevel(c, tiles.join(''), th(), { edit: true });
+  const save = () => { if (!editId) lsSet('bh_draft', JSON.stringify({ level: { tiles: tiles.join('') }, theme: th() })); };
+  paint();
+  $$('#pal button').forEach(b => b.onclick = () => { tool = +b.dataset.t; $$('#pal button').forEach(x => x.classList.toggle('on', x === b)); });
+  ['cSky', 'cBlock', 'cPlayer'].forEach(id => $('#' + id).oninput = () => { paint(); save(); });
+  let drawing = false;
+  const put = e => {
+    const r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * LW), y = Math.floor((e.clientY - r.top) / r.height * LH);
+    if (x < 0 || y < 0 || x >= LW || y >= LH) return;
+    if (tool === 5 || tool === 4) tiles = tiles.map(v => v === String(tool) ? '0' : v);
+    tiles[y * LW + x] = String(tool); paint();
+  };
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); drawing = true; cv.setPointerCapture?.(e.pointerId); put(e); });
+  cv.addEventListener('pointermove', e => drawing && put(e));
+  cv.addEventListener('pointerup', () => { drawing = false; save(); });
+  $('#clear').onclick = () => { if (confirm('Clear the whole level?')) { tiles = defaultLevel().tiles.split(''); paint(); save(); } };
+  const valid = () => { const s = tiles.join(''); if (!s.includes('5')) return 'Place a spawn tile.'; if (!s.includes('4')) return 'Place a goal tile.'; return null; };
+  $('#test').onclick = () => {
+    const bad = valid(); if (bad) return toast(bad, 'err');
+    const stage = $('#edStage'); stage.innerHTML = '<canvas id="tp"></canvas><div class="over" id="tov" hidden></div>';
+    $('#test').textContent = 'Stop test'; $('#test').onclick = () => viewCreateResume();
+    testing = runGame($('#tp'), makePlatformer({ tiles: tiles.join('') }, th()), { onEnd: s => { $('#tov').hidden = false; $('#tov').innerHTML = `<div><div class="big">${fmt(s)}</div><p>You beat your level!</p></div>`; } });
+    const padHTML = `<div class="pad" id="tpad"><button class="btn w" data-k="left">&#9664;</button><button class="btn y" data-k="jump">Jump</button><button class="btn w" data-k="right">&#9654;</button></div>`;
+    stage.insertAdjacentHTML('afterend', padHTML);
+    $$('#tpad [data-k]').forEach(b => { const k = b.dataset.k; b.onpointerdown = e => { e.preventDefault(); testing.g.keys[k] = true; }; b.onpointerup = b.onpointerleave = b.onpointercancel = () => testing.g.keys[k] = false; });
+  };
+  const viewCreateResume = () => {
+    testing && testing.stop(); save();
+    createResume = { tiles: tiles.join(''), theme: th(), title: $('#gTitle').value, description: $('#gDesc').value };
+    viewCreate(editId).catch(fail);
+  };
+  onLeave(() => testing && testing.stop());
+  $('#pub').onclick = async () => {
+    if (needLogin()) return;
+    const bad = valid(); if (bad) return toast(bad, 'err');
+    const title = $('#gTitle').value.trim(); if (title.length < 3) return toast('Give your game a title (3+ letters).', 'err');
+    const row = { title, description: $('#gDesc').value.trim() || null, level: { tiles: tiles.join('') }, theme: th(), published: true };
+    try {
+      if (editId) { const { error } = await S.sb.from('community_games').update(row).eq('id', editId); if (error) throw error; toast('Saved', 'ok'); location.hash = '#/cg/' + editId; }
+      else { const { data, error } = await S.sb.from('community_games').insert({ ...row, creator: S.user.id }).select('id').single(); if (error) throw error; lsSet('bh_draft', null); toast('Published!', 'ok'); location.hash = '#/cg/' + data.id; }
+    } catch (e) { fail(e); }
+  };
+  if (editId) $('#del').onclick = async () => { if (!confirm('Delete this game for good?')) return; const { error } = await S.sb.from('community_games').delete().eq('id', editId); if (error) return fail(error); toast('Deleted'); location.hash = '#/create'; };
+}
+
+/* ---------- Forum ---------- */
+const CATS = { general: 'General', updates: 'Dev updates', showcase: 'Showcase', help: 'Help' };
+async function viewForum() {
+  if (!online()) return viewSetup();
+  const cat = q('cat');
+  view.innerHTML = `<div class="row"><h1 class="grow">Forum</h1><button class="btn y" id="newPost">New post</button></div>
+  <div class="tabs"><a class="tab ${!cat ? 'on' : ''}" href="#/forum">All</a>${Object.entries(CATS).map(([k, v]) => `<a class="tab ${cat === k ? 'on' : ''}" href="#/forum?cat=${k}">${v}</a>`).join('')}</div>
+  <div class="card" id="posts"><div class="spin"></div></div>`;
+  $('#newPost').onclick = () => { if (needLogin()) return; newPostModal(cat); };
+  let qy = S.sb.from('forum_posts').select(`id,title,category,pinned,reply_count,last_activity,author:profiles(${PROFILE_COLS})`).order('pinned', { ascending: false }).order('last_activity', { ascending: false }).limit(50);
+  if (cat) qy = qy.eq('category', cat);
+  const { data, error } = await qy; if (error) throw error;
+  $('#posts').innerHTML = data.length ? data.map(p => `<a class="li" style="text-decoration:none;color:inherit" href="#/post/${p.id}">${avImg(p.author)}<div class="grow"><b>${p.pinned ? '<span class="pill pending">Pinned</span> ' : ''}${esc(p.title)}</b><div class="small muted">${esc(p.author?.username)} · ${CATS[p.category]} · ${ago(p.last_activity)}</div></div><span class="pill">${p.reply_count}</span></a>`).join('') : '<div class="empty">No posts yet. Start the conversation.</div>';
+}
+function newPostModal(cat) {
+  modal(`<h2>New post</h2><div class="stack">
+    <div><label>Category</label><select id="pc">${Object.entries(CATS).map(([k, v]) => `<option value="${k}" ${k === cat ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+    <div><label>Title</label><input type="text" id="pt" maxlength="120"></div>
+    <div><label>Post</label><textarea id="pb" maxlength="5000" style="min-height:160px"></textarea></div>
+    <div class="row"><button class="btn y grow" id="ps">Post</button><button class="btn w" data-close>Cancel</button></div></div>`, (m, close) => {
+    $('#ps', m).onclick = async () => {
+      const { data, error } = await S.sb.from('forum_posts').insert({ author: S.user.id, category: $('#pc', m).value, title: $('#pt', m).value.trim(), body: $('#pb', m).value.trim() }).select('id').single();
+      if (error) return fail(error); close(); location.hash = '#/post/' + data.id;
+    };
+  });
+}
+async function viewPost(id) {
+  if (!online()) return viewSetup();
+  const [{ data: p, error }, { data: replies }] = await Promise.all([
+    S.sb.from('forum_posts').select(`*,author:profiles(${PROFILE_COLS})`).eq('id', id).single(),
+    S.sb.from('forum_replies').select(`*,author:profiles(${PROFILE_COLS})`).eq('post_id', id).order('created_at').limit(300),
+  ]);
+  if (error) throw error;
+  const admin = S.profile?.is_admin, mine = S.user?.id === p.author?.id;
+  view.innerHTML = `<a class="btn w sm" href="#/forum">Back</a>
+  <div class="card" style="margin-top:12px"><span class="pill">${CATS[p.category]}</span> ${p.pinned ? '<span class="pill pending">Pinned</span>' : ''}
+    <h1 style="margin-top:8px">${esc(p.title)}</h1>
+    <div class="row">${avImg(p.author)}<div>${nameTag(p.author)}<div class="small muted">${ago(p.created_at)}</div></div></div>
+    <p class="post-body">${esc(p.body)}</p>
+    <div class="row">${mine || admin ? '<button class="btn r sm" id="delP">Delete</button>' : ''}${admin ? `<button class="btn w sm" id="pinP">${p.pinned ? 'Unpin' : 'Pin'}</button>` : ''}</div>
+  </div>
+  <h3 style="margin-top:16px">${p.reply_count} replies</h3>
+  <div class="card">${(replies || []).map(r => `<div class="li" style="align-items:flex-start">${avImg(r.author)}<div class="grow">${nameTag(r.author)} <span class="small muted">${ago(r.created_at)}</span><div class="post-body">${esc(r.body)}</div></div>${S.user?.id === r.author?.id || admin ? `<button class="btn w sm" data-dr="${r.id}">x</button>` : ''}</div>`).join('') || '<div class="empty">No replies yet.</div>'}</div>
+  <div class="card">${S.user ? '<textarea id="rb" maxlength="3000" placeholder="Write a reply"></textarea><button class="btn y block" style="margin-top:10px" id="rs">Reply</button>' : '<a href="#/login">Sign in</a> to reply.'}</div>`;
+  if ($('#rs')) $('#rs').onclick = async () => { const body = $('#rb').value.trim(); if (!body) return; const { error } = await S.sb.from('forum_replies').insert({ post_id: +id, author: S.user.id, body }); if (error) return fail(error); render(); };
+  if ($('#delP')) $('#delP').onclick = async () => { if (!confirm('Delete post?')) return; const { error } = await S.sb.from('forum_posts').delete().eq('id', id); if (error) return fail(error); location.hash = '#/forum'; };
+  if ($('#pinP')) $('#pinP').onclick = () => rpc('admin_pin_post', { p_post: +id, p_pinned: !p.pinned }).then(render, fail);
+  $$('[data-dr]').forEach(b => b.onclick = async () => { const { error } = await S.sb.from('forum_replies').delete().eq('id', b.dataset.dr); if (error) return fail(error); render(); });
+}
+
+/* ---------- Shop + avatar ---------- */
+async function viewShop() {
+  if (!online()) return viewSetup();
+  await loadItems();
+  let owned = new Set();
+  if (S.user) { const { data } = await S.sb.from('inventory').select('item_id').eq('user_id', S.user.id); owned = new Set((data || []).map(r => r.item_id)); }
+  const plus = S.profile?.plus_until && new Date(S.profile.plus_until) > new Date();
+  const kind = q('k') || 'hat';
+  const items = Object.values(S.items).filter(i => i.kind === kind);
+  view.innerHTML = `<div class="row"><h1 class="grow">Item shop</h1><a class="btn w" href="#/avatar">My avatar</a></div>
+  <div class="tabs">${['hat', 'face', 'shirt'].map(k => `<a class="tab ${k === kind ? 'on' : ''}" href="#/shop?k=${k}">${k[0].toUpperCase() + k.slice(1)}s</a>`).join('')}</div>
+  <div class="grid">${items.map(i => `<div class="card item"><canvas data-i="${esc(i.id)}" width="200" height="200"></canvas><b style="display:block;margin-top:6px">${esc(i.name)}</b>
+    ${i.plus_only ? '<span class="plusb">PLUS</span> ' : ''}<span class="row" style="justify-content:center;margin:4px 0"><span class="coin"></span>${fmt(i.price)}</span>
+    ${owned.has(i.id) ? (S.profile?.equipped?.[i.kind] === i.id ? `<button class="btn w sm block" data-un="${i.kind}">Unequip</button>` : `<button class="btn g sm block" data-eq="${esc(i.id)}">Equip</button>`)
+      : `<button class="btn y sm block" data-buy="${esc(i.id)}" ${i.plus_only && !plus ? 'disabled' : ''}>Buy</button>`}</div>`).join('')}</div>`;
+  $$('canvas[data-i]').forEach(cv => { const it = S.items[cv.dataset.i]; drawAvatar(cv.getContext('2d'), 200, S.profile?.avatar, { ...(S.profile?.equipped || {}), [it.kind]: it.id }); });
+  $$('[data-buy]').forEach(b => b.onclick = async () => {
+    if (needLogin()) return; const it = S.items[b.dataset.buy];
+    if (!confirm(`Buy ${it.name} for ${it.price} Bux?`)) return;
+    try { S.bux = await rpc('buy_shop_item', { p_item: it.id }); paintTop(); toast('Bought ' + it.name, 'ok'); render(); } catch (e) { fail(e); }
+  });
+  $$('[data-eq]').forEach(b => b.onclick = async () => { try { S.profile.equipped = await rpc('equip_item', { p_item: b.dataset.eq }); paintTop(); render(); } catch (e) { fail(e); } });
+  $$('[data-un]').forEach(b => b.onclick = async () => { try { S.profile.equipped = await rpc('unequip_item', { p_kind: b.dataset.un }); paintTop(); render(); } catch (e) { fail(e); } });
+}
+async function viewAvatar() {
+  if (needLogin()) return;
+  const av = { head: '#ffd23f', torso: '#2d7ff9', legs: '#2b2d42', ...S.profile.avatar };
+  view.innerHTML = `<h1>My avatar</h1><div class="card center"><canvas id="avc" width="260" height="260" style="width:200px;border:3px solid var(--line);border-radius:18px"></canvas>
+    <div class="row" style="justify-content:center;margin-top:12px">${['head', 'torso', 'legs'].map(k => `<div class="color-row"><input type="color" data-c="${k}" value="${esc(av[k])}"><span>${k}</span></div>`).join('')}</div>
+    <div class="row" style="margin-top:14px"><button class="btn y grow" id="sv">Save</button><a class="btn w" href="#/shop">Shop items</a></div></div>`;
+  const draw = () => drawAvatar($('#avc').getContext('2d'), 260, av, S.profile.equipped);
+  draw();
+  $$('[data-c]').forEach(i => i.oninput = () => { av[i.dataset.c] = i.value; draw(); });
+  $('#sv').onclick = async () => { const { error } = await S.sb.from('profiles').update({ avatar: av }).eq('id', S.user.id); if (error) return fail(error); S.profile.avatar = av; paintTop(); toast('Saved', 'ok'); };
+}
+
+/* ---------- Bux: gift codes, packs, referrals ---------- */
+async function viewBux() {
+  if (needLogin()) return;
+  const [{ data: codes }, { data: ledger }, stats] = await Promise.all([
+    S.sb.from('gift_codes').select('code,bux,redeemed_at,created_at').eq('purchased_by', S.user.id).order('created_at', { ascending: false }),
+    S.sb.from('bux_ledger').select('delta,reason,created_at').eq('user_id', S.user.id).order('created_at', { ascending: false }).limit(20),
+    rpc('my_referral_stats'),
+  ]);
+  const link = location.origin + location.pathname + '?ref=' + S.profile.referral_code;
+  view.innerHTML = `<h1>Bux</h1>
+  <div class="card center"><div class="row" style="justify-content:center;font-size:2rem;font-weight:700"><span class="coin" style="width:32px;height:32px"></span>${fmt(S.bux)}</div><p class="muted">Earn Bux by playing (up to 300 a day, 600 with Plus), inviting friends and redeeming gift codes.</p></div>
+  <div class="card"><h3>Redeem a gift code</h3><div class="row"><input type="text" id="gc" class="grow" placeholder="BUX-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" style="flex:1;min-width:0"><button class="btn y" id="rd">Redeem</button></div></div>
+  <div class="card"><h3>Buy a Bux gift code</h3><p class="muted small">You get a code you can redeem yourself or give to a friend.</p>
+    <div class="grid">${[['small', '400', '$4.99'], ['medium', '1,000', '$9.99'], ['large', '2,200', '$19.99']].map(([k, b, p]) => `<button class="btn w" data-pack="${k}" style="flex-direction:column;height:auto;padding:12px"><span class="row"><span class="coin"></span>${b}</span><span>${p}</span></button>`).join('')}</div>
+    ${codes?.length ? `<h3 style="margin-top:14px">Your purchased codes</h3>${codes.map(c => `<div class="li"><span class="code grow">${esc(c.code)}</span><b>${fmt(c.bux)}</b>${c.redeemed_at ? '<span class="pill">used</span>' : `<button class="btn sm g" data-use="${esc(c.code)}">Redeem</button><button class="btn sm w" data-copy="${esc(c.code)}">Copy</button>`}</div>`).join('')}` : ''}
+  </div>
+  <div class="card"><h3>Invite friends</h3><p class="muted small">Friends who join with your code get 100 Bux. You get 200 Bux once they play 3 rewarded games.</p>
+    <div class="row"><span class="code grow">${esc(S.profile.referral_code)}</span><button class="btn sm y" data-copy="${esc(link)}">Copy link</button>${navigator.share ? '<button class="btn sm w" id="share">Share</button>' : ''}</div>
+    <div class="kv" style="margin-top:12px"><div><b>${stats.invited}</b>invited</div><div><b>${stats.rewarded}</b>rewarded</div><div><b>${fmt(stats.rewarded * 200)}</b>Bux earned</div></div>
+    ${!stats.used_code ? '<div class="row" style="margin-top:12px"><input type="text" id="refc" placeholder="Got an invite code?" style="flex:1;min-width:0"><button class="btn w" id="refb">Apply</button></div>' : ''}
+  </div>
+  <div class="card"><h3>History</h3>${(ledger || []).map(l => `<div class="li"><span class="grow">${esc(l.reason)} <span class="small muted">${ago(l.created_at)}</span></span><b style="color:${l.delta > 0 ? 'var(--green)' : 'var(--red)'}">${l.delta > 0 ? '+' : ''}${fmt(l.delta)}</b></div>`).join('') || '<div class="empty">Nothing yet</div>'}</div>`;
+  const redeem = async code => { try { const r = await rpc('redeem_gift_code', { p_code: code }); if (!r.ok) return toast(r.error, 'err'); S.bux = r.balance; paintTop(); toast(`+${fmt(r.bux)} Bux!`, 'ok'); render(); } catch (e) { fail(e); } };
+  $('#rd').onclick = () => $('#gc').value.trim() && redeem($('#gc').value);
+  $$('[data-use]').forEach(b => b.onclick = () => redeem(b.dataset.use));
+  $$('[data-copy]').forEach(b => b.onclick = () => navigator.clipboard.writeText(b.dataset.copy).then(() => toast('Copied', 'ok'), () => toast(b.dataset.copy)));
+  $$('[data-pack]').forEach(b => b.onclick = async () => { b.disabled = true; try { location.href = (await fnCall('bux', { pack: b.dataset.pack })).url; } catch (e) { fail(e); b.disabled = false; } });
+  if ($('#share')) $('#share').onclick = () => navigator.share({ title: 'Join me on Blockhub', url: link }).catch(() => {});
+  if ($('#refb')) $('#refb').onclick = async () => { try { const r = await rpc('apply_referral', { p_code: $('#refc').value }); S.bux = r.balance; paintTop(); toast(`+${r.bonus} Bux!`, 'ok'); render(); } catch (e) { fail(e); } };
+}
+
+/* ---------- Plus ---------- */
+async function viewPlus() {
+  if (S.user) await loadMe();
+  const plus = S.profile?.plus_until && new Date(S.profile.plus_until) > new Date();
+  view.innerHTML = `<section class="hero" style="background:linear-gradient(135deg,#7b2ff7,#ff5fa2)"><h1>Blockhub Plus</h1><p>Support the platform and get perks.</p>${plus ? `<span class="pill" style="color:var(--ink)">Active until ${new Date(S.profile.plus_until).toLocaleDateString()}</span>` : ''}</section>
+  <div class="card"><h3>Perks</h3>
+    <div class="li"><b class="grow">500 Bux every month</b></div><div class="li"><b class="grow">2x Bux from games, 600 daily cap</b></div>
+    <div class="li"><b class="grow">Plus-only items in the shop</b></div><div class="li"><b class="grow">PLUS badge next to your name</b></div></div>
+  <div class="card">${plus ? '<button class="btn y block" id="stip">Claim monthly 500 Bux</button><button class="btn w block" style="margin-top:10px" id="portal">Manage subscription</button>' : '<button class="btn p block" id="sub">Subscribe with Stripe</button><p class="muted small center">Billed monthly. Cancel any time.</p>'}</div>`;
+  if ($('#sub')) $('#sub').onclick = async () => { if (needLogin()) return; try { location.href = (await fnCall('plus')).url; } catch (e) { fail(e); } };
+  if ($('#portal')) $('#portal').onclick = async () => { try { location.href = (await fnCall('portal')).url; } catch (e) { fail(e); } };
+  if ($('#stip')) $('#stip').onclick = async () => { try { S.bux = await rpc('claim_plus_stipend'); paintTop(); toast('+500 Bux', 'ok'); } catch (e) { fail(e); } };
+}
+
+/* ---------- Marketplace ---------- */
+const stars = n => '<span class="stars">' + '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n)) + '</span>';
+const listingImg = l => l.image_url ? `<img alt="" loading="lazy" src="${esc(l.image_url)}" referrerpolicy="no-referrer">` : `<img alt="" src="${avatarURL({ avatar: { torso: COLORS[l.title.length % 7] } }, 200)}">`;
+async function viewMarket() {
+  if (!online()) return viewSetup();
+  const { data, error } = await S.sb.from('market_listings').select(`id,title,price_cents,image_url,seller:profiles(${PROFILE_COLS})`).eq('status', 'approved').order('created_at', { ascending: false }).limit(60);
+  if (error) throw error;
+  view.innerHTML = `<div class="row"><h1 class="grow">Marketplace</h1><a class="btn y" href="#/sell">Sell</a><a class="btn w" href="#/orders">Orders</a></div>
+  <p class="muted">Real-money items from creators. Every listing is reviewed by an admin. Payments go through Stripe.</p>
+  ${data.length ? `<div class="grid">${data.map(l => `<a class="gcard" href="#/item/${l.id}"><div class="th">${listingImg(l)}</div><div class="meta"><b>${esc(l.title)}</b><span class="small"><b>${money(l.price_cents)}</b> · ${esc(l.seller?.username)}</span></div></a>`).join('')}</div>` : '<div class="card empty">No listings yet.</div>'}`;
+}
+async function viewItem(id) {
+  if (!online()) return viewSetup();
+  const { data: l, error } = await S.sb.from('market_listings').select(`*,seller:profiles(${PROFILE_COLS})`).eq('id', id).single();
+  if (error) throw error;
+  const [{ data: rating }, { data: reviews }] = await Promise.all([
+    S.sb.from('seller_ratings').select('*').eq('seller', l.seller.id).maybeSingle(),
+    S.sb.from('seller_reviews').select(`rating,body,created_at,reviewer:profiles!seller_reviews_reviewer_fkey(${PROFILE_COLS})`).eq('seller', l.seller.id).order('created_at', { ascending: false }).limit(10),
+  ]);
+  view.innerHTML = `<a class="btn w sm" href="#/market">Back</a>
+  <div class="card" style="margin-top:12px"><div class="gcard" style="box-shadow:none"><div class="th">${listingImg(l)}</div></div>
+    <h1 style="margin-top:12px">${esc(l.title)}</h1><div class="row"><b style="font-size:1.4rem">${money(l.price_cents)}</b><span class="pill ${l.status}">${l.status}</span><span class="muted small">${l.stock} left</span></div>
+    <p class="post-body">${esc(l.description)}</p>
+    ${l.status === 'approved' && l.stock > 0 && S.user?.id !== l.seller.id ? '<button class="btn g block" id="buy">Buy with Stripe</button>' : ''}
+    ${S.user?.id === l.seller.id || S.profile?.is_admin ? '<button class="btn r sm" id="rm" style="margin-top:10px">Remove listing</button>' : ''}</div>
+  <div class="card"><h3>Seller</h3><div class="row">${avImg(l.seller)}<div class="grow">${nameTag(l.seller)}<div class="small">${rating ? `${stars(rating.avg_rating)} ${rating.avg_rating} (${rating.reviews})` : '<span class="muted">No reviews yet</span>'}</div></div></div>
+    ${(reviews || []).map(r => `<div class="li" style="align-items:flex-start"><div class="grow">${stars(r.rating)} <span class="small muted">${esc(r.reviewer?.username)} · ${ago(r.created_at)}</span>${r.body ? `<div class="post-body">${esc(r.body)}</div>` : ''}</div></div>`).join('')}</div>`;
+  if ($('#buy')) $('#buy').onclick = async () => { if (needLogin()) return; $('#buy').disabled = true; try { location.href = (await fnCall('market', { listing_id: id })).url; } catch (e) { fail(e); $('#buy').disabled = false; } };
+  if ($('#rm')) $('#rm').onclick = async () => { if (!confirm('Remove listing?')) return; try { await rpc('remove_listing', { p_listing: id }); toast('Removed'); location.hash = '#/sell'; } catch (e) { fail(e); } };
+}
+async function viewSell() {
+  if (needLogin()) return;
+  let { data: priv } = await S.sb.from('profile_private').select('*').eq('user_id', S.user.id).single();
+  if (priv?.stripe_account_id && !priv.charges_enabled) { try { const r = await fnCall('connect_refresh'); priv = { ...priv, ...r }; } catch {} }
+  const [{ data: mine }, { data: sales }] = await Promise.all([
+    S.sb.from('market_listings').select('*').eq('seller', S.user.id).order('created_at', { ascending: false }),
+    S.sb.from('market_orders').select('id,amount_cents,fee_cents,status,paid_at,listing:market_listings(title)').eq('seller', S.user.id).eq('status', 'paid').order('paid_at', { ascending: false }).limit(30),
+  ]);
+  const ready = priv?.charges_enabled;
+  view.innerHTML = `<h1>Sell on the marketplace</h1>
+  <div class="card"><h3>1. Payouts</h3>${ready ? `<p>Stripe is connected. Payouts ${priv.payouts_enabled ? 'are on' : 'are still being verified'}.</p><button class="btn w" id="dash">Open Stripe dashboard</button>` : `<p class="muted">Connect a Stripe Express account to get paid. Blockhub keeps a 10% fee.</p><button class="btn p" id="onb">${priv?.stripe_account_id ? 'Finish Stripe setup' : 'Set up payouts'}</button>`}</div>
+  <div class="card"><h3>2. New listing</h3>${ready ? `<div class="stack">
+    <div><label>Title</label><input type="text" id="lt" maxlength="60"></div>
+    <div><label>Description</label><textarea id="ld" maxlength="1000"></textarea></div>
+    <div class="row"><div class="grow"><label>Price (USD)</label><input type="number" id="lp" min="1" max="500" step="0.01" value="4.99"></div><div class="grow"><label>Stock</label><input type="number" id="ls" min="1" max="999" value="1"></div></div>
+    <div><label>Image URL (https, optional)</label><input type="url" id="li" placeholder="https://..."></div>
+    <div><label>What the buyer receives</label><textarea id="ldl" maxlength="2000" placeholder="A download link, code or instructions. Only paying buyers see this."></textarea></div>
+    <button class="btn y block" id="lsub">Submit for review</button></div>` : '<p class="muted">Finish step 1 first.</p>'}</div>
+  <div class="card"><h3>My listings</h3>${(mine || []).map(l => `<div class="li"><a class="grow name" href="#/item/${l.id}">${esc(l.title)}</a><b>${money(l.price_cents)}</b><span class="pill ${l.status}">${l.status}</span></div>${l.reject_reason ? `<div class="small muted">Reason: ${esc(l.reject_reason)}</div>` : ''}`).join('') || '<div class="empty">No listings</div>'}</div>
+  <div class="card"><h3>Sales</h3>${(sales || []).map(o => `<div class="li"><span class="grow">${esc(o.listing?.title)} <span class="small muted">${ago(o.paid_at)}</span></span><b>${money(o.amount_cents - o.fee_cents)}</b></div>`).join('') || '<div class="empty">No sales yet</div>'}</div>`;
+  if ($('#onb')) $('#onb').onclick = async () => { try { location.href = (await fnCall('connect')).url; } catch (e) { fail(e); } };
+  if ($('#dash')) $('#dash').onclick = async () => { try { location.href = (await fnCall('connect_dashboard')).url; } catch (e) { fail(e); } };
+  if ($('#lsub')) $('#lsub').onclick = async () => {
+    try {
+      await rpc('create_listing', { p_title: $('#lt').value, p_description: $('#ld').value, p_price_cents: Math.round(parseFloat($('#lp').value) * 100), p_image_url: $('#li').value, p_stock: parseInt($('#ls').value) || 1, p_delivery: $('#ldl').value });
+      toast('Submitted! An admin will review it.', 'ok'); render();
+    } catch (e) { fail(e); }
+  };
+}
+async function viewOrders() {
+  if (needLogin()) return;
+  const { data, error } = await S.sb.from('market_orders').select(`id,status,amount_cents,created_at,paid_at,listing:market_listings(id,title),seller_p:profiles!market_orders_seller_fkey(${PROFILE_COLS})`).eq('buyer', S.user.id).order('created_at', { ascending: false });
+  if (error) throw error;
+  const { data: revs } = await S.sb.from('seller_reviews').select('order_id').eq('reviewer', S.user.id);
+  const reviewed = new Set((revs || []).map(r => r.order_id));
+  const list = data.filter(o => o.status !== 'expired');
+  view.innerHTML = `<h1>My orders</h1><div class="card">${list.map(o => `<div class="li" style="flex-wrap:wrap"><div class="grow"><a class="name" href="#/item/${o.listing?.id}">${esc(o.listing?.title)}</a><div class="small muted">from ${esc(o.seller_p?.username)} · ${ago(o.created_at)}</div></div><b>${money(o.amount_cents)}</b><span class="pill ${o.status}">${o.status}</span>
+    ${o.status === 'paid' ? `<div class="row" style="width:100%"><button class="btn sm g" data-get="${o.id}">Get item</button>${reviewed.has(o.id) ? '<span class="small muted">Reviewed</span>' : `<button class="btn sm w" data-rev="${o.id}">Review seller</button>`}</div>` : ''}</div>`).join('') || '<div class="empty">No orders yet. <a href="#/market">Browse the market</a></div>'}</div>`;
+  $$('[data-get]').forEach(b => b.onclick = async () => { try { const d = await rpc('get_order_delivery', { p_order: b.dataset.get }); modal(`<h2>Your item</h2><div class="code post-body">${esc(d)}</div><button class="btn w block" style="margin-top:12px" data-close>Close</button>`); } catch (e) { fail(e); } });
+  $$('[data-rev]').forEach(b => b.onclick = () => modal(`<h2>Review seller</h2><div class="stack"><select id="rr">${[5, 4, 3, 2, 1].map(n => `<option value="${n}">${n} stars</option>`).join('')}</select><textarea id="rt" maxlength="500" placeholder="How was it?"></textarea><button class="btn y block" id="rsv">Submit</button></div>`, (m, close) => {
+    $('#rsv', m).onclick = async () => { try { await rpc('submit_seller_review', { p_order: b.dataset.rev, p_rating: +$('#rr', m).value, p_body: $('#rt', m).value }); close(); toast('Thanks!', 'ok'); render(); } catch (e) { fail(e); } };
+  }));
+}
+
+/* ---------- Social ---------- */
+async function viewFriends() {
+  if (needLogin()) return;
+  const uid = S.user.id;
+  const { data: fr, error } = await S.sb.from('friendships').select('*').or(`requester.eq.${uid},addressee.eq.${uid}`);
+  if (error) throw error;
+  const ids = [...new Set(fr.flatMap(f => [f.requester, f.addressee]).filter(x => x !== uid))];
+  const { data: people } = ids.length ? await S.sb.from('profiles').select(PROFILE_COLS).in('id', ids) : { data: [] };
+  const P = Object.fromEntries((people || []).map(p => [p.id, p]));
+  const { data: unreadRows } = await S.sb.from('messages').select('sender').eq('recipient', uid).is('read_at', null).limit(500);
+  const unreadBy = {}; (unreadRows || []).forEach(r => unreadBy[r.sender] = (unreadBy[r.sender] || 0) + 1);
+  const friends = fr.filter(f => f.status === 'accepted').map(f => P[f.requester === uid ? f.addressee : f.requester]).filter(Boolean);
+  const incoming = fr.filter(f => f.status === 'pending' && f.addressee === uid).map(f => P[f.requester]).filter(Boolean);
+  const outgoing = fr.filter(f => f.status === 'pending' && f.requester === uid).map(f => P[f.addressee]).filter(Boolean);
+  view.innerHTML = `<h1>Friends</h1>
+  <div class="card"><div class="row"><input type="text" id="us" placeholder="Search players" style="flex:1;min-width:0"><button class="btn" id="usb">Search</button></div><div id="usr"></div></div>
+  ${incoming.length ? `<div class="card"><h3>Requests</h3>${incoming.map(p => `<div class="li">${avImg(p)}<span class="grow">${nameTag(p)}</span><button class="btn sm g" data-acc="${p.id}">Accept</button><button class="btn sm w" data-dec="${p.id}">No</button></div>`).join('')}</div>` : ''}
+  <div class="card"><h3>Friends (${friends.length})</h3>${friends.map(p => `<div class="li">${avImg(p)}<span class="grow">${nameTag(p)}</span><a class="btn sm" href="#/chat/${p.id}">Chat ${unreadBy[p.id] ? `<span class="dot">${unreadBy[p.id]}</span>` : ''}</a></div>`).join('') || '<div class="empty">No friends yet. Search above.</div>'}</div>
+  ${outgoing.length ? `<div class="card"><h3>Sent</h3>${outgoing.map(p => `<div class="li">${avImg(p)}<span class="grow">${nameTag(p)}</span><span class="pill pending">pending</span></div>`).join('')}</div>` : ''}`;
+  const search = async () => {
+    const term = $('#us').value.trim().replace(/[%_,()]/g, ''); if (term.length < 2) return;
+    const { data } = await S.sb.from('profiles').select(PROFILE_COLS).ilike('username', `%${term}%`).limit(15);
+    $('#usr').innerHTML = (data || []).map(p => `<div class="li">${avImg(p)}<span class="grow">${nameTag(p)}</span></div>`).join('') || '<div class="empty">No one found</div>';
+  };
+  $('#usb').onclick = search; $('#us').onkeydown = e => e.key === 'Enter' && search();
+  $$('[data-acc]').forEach(b => b.onclick = () => rpc('respond_friend_request', { p_from: b.dataset.acc, p_accept: true }).then(render, fail));
+  $$('[data-dec]').forEach(b => b.onclick = () => rpc('respond_friend_request', { p_from: b.dataset.dec, p_accept: false }).then(render, fail));
+}
+async function viewChat(other) {
+  if (needLogin()) return;
+  const uid = S.user.id;
+  const [{ data: p }, { data: msgs, error }] = await Promise.all([
+    S.sb.from('profiles').select(PROFILE_COLS).eq('id', other).single(),
+    S.sb.from('messages').select('*').or(`and(sender.eq.${uid},recipient.eq.${other}),and(sender.eq.${other},recipient.eq.${uid})`).order('created_at', { ascending: false }).limit(60),
+  ]);
+  if (error) throw error;
+  view.innerHTML = `<div class="row"><a class="btn w sm" href="#/friends">Back</a>${avImg(p)}${nameTag(p)}</div>
+  <div class="card chat" style="margin-top:10px"><div class="msgs" id="msgs"></div>
+  <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input type="text" id="mt" maxlength="1000" placeholder="Message" style="flex:1;min-width:0"><button class="btn" id="ms">Send</button></div></div>`;
+  const box = $('#msgs');
+  const add = m => { box.insertAdjacentHTML('beforeend', `<div class="msg ${m.sender === uid ? 'me' : ''}">${esc(m.body)}</div>`); box.scrollTop = box.scrollHeight; };
+  (msgs || []).reverse().forEach(add);
+  const markRead = async () => { const { count } = await S.sb.from('messages').update({ read_at: new Date().toISOString() }, { count: 'exact' }).eq('recipient', uid).eq('sender', other).is('read_at', null); S.unread = Math.max(0, S.unread - (count || 0)); paintTop(); };
+  markRead();
+  S.chatWith = other; S.onMsg = m => { add(m); markRead(); };
+  const send = async () => {
+    const body = $('#mt').value.trim(); if (!body) return; $('#mt').value = '';
+    const { data, error } = await S.sb.from('messages').insert({ sender: uid, recipient: other, body }).select().single();
+    if (error) { $('#mt').value = body; return fail(error.code === '42501' ? new Error('You can only message friends.') : error); }
+    add(data);
+  };
+  $('#ms').onclick = send; $('#mt').onkeydown = e => e.key === 'Enter' && send();
+  onLeave(() => { S.chatWith = null; S.onMsg = null; });
+}
+async function viewProfile(username) {
+  if (!online()) return viewSetup();
+  const { data: p, error } = await S.sb.from('profiles').select('*').ilike('username', username.replace(/[%_]/g, '\\$&')).single();
+  if (error) throw error;
+  const me = S.user?.id === p.id;
+  const [{ count: followers }, { count: following }, { data: games }, { data: rating }] = await Promise.all([
+    S.sb.from('follows').select('*', { count: 'exact', head: true }).eq('followee', p.id),
+    S.sb.from('follows').select('*', { count: 'exact', head: true }).eq('follower', p.id),
+    S.sb.from('community_games').select('id,title,plays,level,theme').eq('creator', p.id).eq('published', true).order('plays', { ascending: false }).limit(8),
+    S.sb.from('seller_ratings').select('*').eq('seller', p.id).maybeSingle(),
+  ]);
+  let isFollowing = false, fstate = null;
+  if (S.user && !me) {
+    const [{ data: f }, { data: fr }] = await Promise.all([
+      S.sb.from('follows').select('follower').eq('follower', S.user.id).eq('followee', p.id).maybeSingle(),
+      S.sb.from('friendships').select('*').or(`and(requester.eq.${S.user.id},addressee.eq.${p.id}),and(requester.eq.${p.id},addressee.eq.${S.user.id})`).maybeSingle(),
+    ]);
+    isFollowing = !!f; fstate = fr ? (fr.status === 'accepted' ? 'friends' : fr.requester === S.user.id ? 'sent' : 'incoming') : null;
+  }
+  view.innerHTML = `<div class="card center">${avImg(p, 'lg')}<h1 style="margin-top:10px">${nameTag(p, false)}</h1>${p.display_name ? `<div class="muted">${esc(p.display_name)}</div>` : ''}
+    ${p.bio ? `<p class="post-body">${esc(p.bio)}</p>` : ''}
+    <div class="kv" style="margin:12px 0"><div><b>${fmt(followers)}</b>followers</div><div><b>${fmt(following)}</b>following</div><div><b>${games?.length || 0}</b>games</div></div>
+    ${rating ? `<div class="small">Seller rating ${stars(rating.avg_rating)} ${rating.avg_rating} (${rating.reviews})</div>` : ''}
+    <div class="row" style="justify-content:center;margin-top:10px">${me ? '<a class="btn w" href="#/settings">Edit profile</a><a class="btn y" href="#/avatar">Avatar</a>' : S.user ? `
+      <button class="btn ${isFollowing ? 'w' : ''}" id="fol">${isFollowing ? 'Unfollow' : 'Follow'}</button>
+      ${fstate === 'friends' ? `<a class="btn g" href="#/chat/${p.id}">Message</a><button class="btn w sm" id="unf">Unfriend</button>` : fstate === 'sent' ? '<span class="pill pending">Request sent</span>' : `<button class="btn y" id="addf">${fstate === 'incoming' ? 'Accept friend' : 'Add friend'}</button>`}` : '<a class="btn" href="#/login">Sign in to follow</a>'}</div></div>
+  ${games?.length ? `<h2 style="margin-top:16px">Games by ${esc(p.username)}</h2><div class="grid">${games.map(cg => gameCard('#/cg/' + cg.id, levelThumb(cg.level, cg.theme), cg.title, fmt(cg.plays) + ' plays')).join('')}</div>` : ''}`;
+  if ($('#fol')) $('#fol').onclick = async () => {
+    const { error } = isFollowing ? await S.sb.from('follows').delete().eq('follower', S.user.id).eq('followee', p.id) : await S.sb.from('follows').insert({ follower: S.user.id, followee: p.id });
+    if (error) return fail(error); render();
+  };
+  if ($('#addf')) $('#addf').onclick = () => rpc('send_friend_request', { p_target: p.id }).then(r => { toast(r === 'friends' ? 'You are now friends!' : 'Request sent', 'ok'); render(); }, fail);
+  if ($('#unf')) $('#unf').onclick = () => confirm('Remove friend?') && rpc('remove_friend', { p_other: p.id }).then(render, fail);
+}
+
+/* ---------- Account ---------- */
+async function viewLogin() {
+  if (!online()) return viewSetup();
+  if (S.user) { location.hash = '#/'; return; }
+  let mode = 'in';
+  const draw = () => {
+    view.innerHTML = `<div class="card" style="max-width:420px;margin:0 auto"><h1 class="center">${mode === 'in' ? 'Welcome back' : 'Join Blockhub'}</h1>
+    <div class="tabs" style="justify-content:center"><button class="tab ${mode === 'in' ? 'on' : ''}" data-m="in">Sign in</button><button class="tab ${mode === 'up' ? 'on' : ''}" data-m="up">Sign up</button><button class="tab ${mode === 'link' ? 'on' : ''}" data-m="link">Email link</button></div>
+    <div class="stack">${mode === 'up' ? '<div><label>Username</label><input type="text" id="un" maxlength="20" placeholder="3-20 letters, numbers, _" autocapitalize="off"></div>' : ''}
+      <div><label>Email</label><input type="email" id="em" autocomplete="email"></div>
+      ${mode !== 'link' ? `<div><label>Password</label><input type="password" id="pw" autocomplete="${mode === 'up' ? 'new-password' : 'current-password'}"></div>` : ''}
+      ${mode === 'up' ? `<div><label>Invite code (optional)</label><input type="text" id="rc" value="${esc(lsGet('bh_ref', ''))}" autocapitalize="characters"></div>` : ''}
+      <button class="btn y block" id="go">${mode === 'in' ? 'Sign in' : mode === 'up' ? 'Create account' : 'Send me a link'}</button>
+      ${mode === 'in' ? '<button class="btn w block" id="fp">Forgot password</button>' : ''}</div></div>`;
+    $$('[data-m]').forEach(b => b.onclick = () => { mode = b.dataset.m; draw(); });
+    $('#go').onclick = async () => {
+      const email = $('#em').value.trim(); const btn = $('#go'); btn.disabled = true;
+      try {
+        if (mode === 'in') { const { error } = await S.sb.auth.signInWithPassword({ email, password: $('#pw').value }); if (error) throw error; }
+        else if (mode === 'link') { const { error } = await S.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } }); if (error) throw error; toast('Check your email for the link', 'ok'); }
+        else {
+          const username = $('#un').value.trim(); if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) throw new Error('Username: 3-20 letters, numbers or _');
+          const rc = $('#rc').value.trim(); if (rc) lsSet('bh_ref', rc.toUpperCase());
+          const { data, error } = await S.sb.auth.signUp({ email, password: $('#pw').value, options: { data: { username }, emailRedirectTo: location.origin + location.pathname } });
+          if (error) throw error;
+          if (!data.session) toast('Check your email to confirm your account', 'ok');
+        }
+      } catch (e) { fail(e); }
+      btn.disabled = false;
+    };
+    if ($('#fp')) $('#fp').onclick = async () => { const email = $('#em').value.trim(); if (!email) return toast('Type your email first', 'err'); const { error } = await S.sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname + '#/settings' }); error ? fail(error) : toast('Reset email sent', 'ok'); };
+  };
+  draw();
+}
+async function viewSettings() {
+  if (needLogin()) return;
+  const p = S.profile;
+  view.innerHTML = `<h1>Settings</h1><div class="card stack">
+    <div><label>Username</label><input type="text" id="su" maxlength="20" value="${esc(p.username)}"></div>
+    <div><label>Display name</label><input type="text" id="sd" maxlength="40" value="${esc(p.display_name || '')}"></div>
+    <div><label>Bio</label><textarea id="sbio" maxlength="300">${esc(p.bio || '')}</textarea></div>
+    <button class="btn y block" id="ss">Save profile</button></div>
+  <div class="card stack"><div><label>New password</label><input type="password" id="np" autocomplete="new-password"></div><button class="btn w block" id="spw">Change password</button></div>
+  <div class="card"><button class="btn r block" id="out">Sign out</button></div>`;
+  $('#ss').onclick = async () => {
+    const upd = { username: $('#su').value.trim(), display_name: $('#sd').value.trim() || null, bio: $('#sbio').value.trim() || null };
+    const { error } = await S.sb.from('profiles').update(upd).eq('id', S.user.id);
+    if (error) return fail(error.code === '23505' ? new Error('That username is taken') : error);
+    Object.assign(S.profile, upd); paintTop(); toast('Saved', 'ok');
+  };
+  $('#spw').onclick = async () => { const { error } = await S.sb.auth.updateUser({ password: $('#np').value }); error ? fail(error) : toast('Password changed', 'ok'); };
+  $('#out').onclick = async () => { await S.sb.auth.signOut(); location.hash = '#/'; };
+}
+async function viewAdmin() {
+  if (needLogin()) return;
+  if (!S.profile?.is_admin) { view.innerHTML = '<div class="card empty">Admins only.</div>'; return; }
+  const { data: pend } = await S.sb.from('market_listings').select(`*,seller:profiles(${PROFILE_COLS})`).eq('status', 'pending').order('created_at');
+  view.innerHTML = `<h1>Admin</h1>
+  <div class="card"><h3>Listings waiting for review (${pend?.length || 0})</h3>${(pend || []).map(l => `<div class="li" style="flex-wrap:wrap"><div class="grow"><b>${esc(l.title)}</b> · ${money(l.price_cents)} · ${nameTag(l.seller)}<div class="small post-body">${esc(l.description)}</div>${l.image_url ? `<div class="small muted">${esc(l.image_url)}</div>` : ''}</div><button class="btn sm g" data-ok="${l.id}">Approve</button><button class="btn sm r" data-no="${l.id}">Reject</button></div>`).join('') || '<div class="empty">All clear</div>'}</div>
+  <div class="card stack"><h3>Verify a user</h3><input type="text" id="vu" placeholder="username"><div class="row"><button class="btn g grow" id="vy">Verify</button><button class="btn w grow" id="vn">Remove badge</button></div></div>
+  <div class="card stack"><h3>Make gift codes</h3><div class="row"><input type="number" id="gn" value="5" min="1" max="100" style="flex:1"><input type="number" id="gb" value="500" min="1" style="flex:1"></div><button class="btn y block" id="gg">Generate (count, Bux each)</button><div id="gout"></div></div>
+  <div class="card stack"><h3>Adjust Bux</h3><input type="text" id="au" placeholder="username"><input type="number" id="ad" placeholder="+/- amount"><input type="text" id="ar" placeholder="reason"><button class="btn w block" id="ab">Apply</button></div>`;
+  $$('[data-ok]').forEach(b => b.onclick = () => rpc('admin_review_listing', { p_listing: b.dataset.ok, p_approve: true, p_reason: null }).then(render, fail));
+  $$('[data-no]').forEach(b => b.onclick = () => { const r = prompt('Reason for rejecting?'); if (r !== null) rpc('admin_review_listing', { p_listing: b.dataset.no, p_approve: false, p_reason: r }).then(render, fail); });
+  $('#vy').onclick = () => rpc('admin_set_verified', { p_username: $('#vu').value.trim(), p_value: true }).then(() => toast('Verified', 'ok'), fail);
+  $('#vn').onclick = () => rpc('admin_set_verified', { p_username: $('#vu').value.trim(), p_value: false }).then(() => toast('Badge removed', 'ok'), fail);
+  $('#gg').onclick = async () => { try { const codes = await rpc('admin_create_gift_codes', { p_count: +$('#gn').value, p_bux: +$('#gb').value }); $('#gout').innerHTML = `<div class="code post-body">${codes.map(esc).join('\n')}</div>`; } catch (e) { fail(e); } };
+  $('#ab').onclick = () => rpc('admin_adjust_bux', { p_username: $('#au').value.trim(), p_delta: +$('#ad').value, p_reason: $('#ar').value }).then(v => toast('New balance ' + fmt(v), 'ok'), fail);
+}
+async function viewMore() {
+  const links = [['#/shop', 'Item shop', 'y'], ['#/avatar', 'My avatar', 'w'], ['#/bux', 'Bux and gift codes', 'y'], ['#/plus', 'Blockhub Plus', 'p'], ['#/market', 'Marketplace', 'g'], ['#/sell', 'Sell items', 'w'], ['#/orders', 'My orders', 'w'], ['#/create', 'Game creator', 'o'], ['#/settings', 'Settings', 'w']];
+  if (S.profile?.is_admin) links.push(['#/admin', 'Admin', 'r']);
+  if (!S.user) links.unshift(['#/login', 'Sign in or join', 'y']);
+  view.innerHTML = `<h1>More</h1><div class="grid">${links.map(([h, t, c]) => `<a class="btn ${c}" href="${h}" style="min-height:70px">${t}</a>`).join('')}</div>`;
+}
+async function viewSetup() {
+  view.innerHTML = `<div class="card" style="max-width:520px;margin:0 auto"><h1>Connect Supabase</h1>
+  <p class="muted">The games work offline. Accounts, Bux, the forum and everything social need your Supabase project. Paste the Project URL and anon key from Supabase > Project Settings > API. They are saved on this device only. For a public deploy, put them in the CONFIG block at the top of the file instead.</p>
+  <div class="stack"><div><label>Project URL</label><input type="url" id="cu" value="${esc(SB_URL)}" placeholder="https://xxxx.supabase.co"></div>
+  <div><label>Anon public key</label><input type="text" id="ck" value="${esc(SB_KEY)}"></div>
+  <button class="btn y block" id="csv">Save and reload</button>${lsGet('bh_url') ? '<button class="btn w block" id="crm">Forget saved keys</button>' : ''}<a class="btn w block" href="#/">Just play games</a></div></div>`;
+  $('#csv').onclick = () => { lsSet('bh_url', $('#cu').value.trim()); lsSet('bh_key', $('#ck').value.trim()); location.hash = '#/'; location.reload(); };
+  if ($('#crm')) $('#crm').onclick = () => { lsSet('bh_url', null); lsSet('bh_key', null); location.reload(); };
+}
+
+boot();
+</script>
+</body>
+</html>
