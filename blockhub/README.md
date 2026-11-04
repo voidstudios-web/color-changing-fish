@@ -14,6 +14,10 @@ A blocky browser game platform in one file: `index.html`. 11 built-in games, a g
 
 The games run without any backend. Everything else needs Supabase.
 
+## Sharing a project with other apps
+
+Every Blockhub table, view, function, index and trigger starts with `bh_`. The schema only changes permissions on `bh_` objects, and the signup trigger catches its own errors, so it can live in a Supabase project that already runs other apps.
+
 ## Setup
 
 ### 1. Supabase
@@ -22,7 +26,7 @@ The games run without any backend. Everything else needs Supabase.
 2. Open SQL Editor, paste all of `supabase/schema.sql`, and run it.
 3. Sign up in the app, then make yourself admin in the SQL Editor:
    ```sql
-   update public.profiles set is_admin = true where username = 'YourName';
+   update public.bh_profiles set is_admin = true where username = 'YourName';
    ```
 4. Under Authentication > URL Configuration, set Site URL to your Netlify URL and add it to Redirect URLs.
 
@@ -62,18 +66,18 @@ Bux pack prices live in `stripe-api/index.ts` (`BUX_PACKS`). The marketplace fee
 
 Free Supabase projects pause after 7 days without API traffic. Two things stop that:
 
-- The GitHub Action calls `keepalive()` every 3 days. Add repo secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` under Settings > Secrets and variables > Actions.
-- The app itself pings `keepalive()` at most once per 12 hours per device.
+- The GitHub Action calls `bh_keepalive()` every 3 days. Add repo secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` under Settings > Secrets and variables > Actions.
+- The app itself pings `bh_keepalive()` at most once per 12 hours per device.
 
 ## How the economy stays safe
 
 - Clients cannot insert, update or delete wallets, the ledger, inventory, gift codes, orders or listings. Postgres grants are revoked and RLS has no write policies on those tables.
-- Every Bux change runs through `_credit()`, which nobody can call directly. Public functions like `submit_score`, `buy_shop_item` and `redeem_gift_code` are `security definer` and check the caller with `auth.uid()`.
-- `svc_` functions are callable only with the service role key, which only the edge functions hold.
+- Every Bux change runs through `bh_credit()`, which nobody can call directly. Public functions like `bh_submit_score`, `bh_buy_shop_item` and `bh_redeem_gift_code` are `security definer` and check the caller with `auth.uid()`.
+- `bh_svc_` functions are callable only with the service role key, which only the edge functions hold.
 - Play rewards need 15+ seconds of play, have a 30 second cooldown and a daily cap (300, or 600 with Plus).
 - Gift code redemption locks you out for an hour after 10 failed tries.
 - Referrers only earn once the invited player finishes 3 rewarded games, capped at 50 rewarded referrals.
-- Listing delivery text sits in a separate table that only the seller can read. Buyers get it from `get_order_delivery` after payment.
+- Listing delivery text sits in a separate table that only the seller can read. Buyers get it from `bh_get_order_delivery` after payment.
 
 ## Auth note
 

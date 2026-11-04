@@ -39,7 +39,7 @@ async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Prom
 }
 
 async function getPrivate(userId: string) {
-  const { data, error } = await admin.from("profile_private").select("*").eq("user_id", userId).single();
+  const { data, error } = await admin.from("bh_profile_private").select("*").eq("user_id", userId).single();
   if (error) throw new Error(error.message);
   return data as { stripe_customer_id: string | null; stripe_account_id: string | null };
 }
@@ -48,7 +48,7 @@ async function getCustomer(userId: string, email?: string) {
   const priv = await getPrivate(userId);
   if (priv.stripe_customer_id) return priv.stripe_customer_id;
   const c = await stripe.customers.create({ email, metadata: { user_id: userId } });
-  await rpc("svc_set_customer", { p_user: userId, p_customer: c.id });
+  await rpc("bh_svc_set_customer", { p_user: userId, p_customer: c.id });
   return c.id;
 }
 
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
       case "market": {
         const order = await rpc<{ order_id: string; amount: number; fee: number; title: string; destination: string; image: string | null }>(
-          "svc_create_order", { p_listing: body.listing_id, p_buyer: user.id, p_fee_pct: MARKET_FEE },
+          "bh_svc_create_order", { p_listing: body.listing_id, p_buyer: user.id, p_fee_pct: MARKET_FEE },
         );
         const s = await stripe.checkout.sessions.create({
           mode: "payment",
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
           success_url: `${SITE}/?checkout=market#/orders`,
           cancel_url: `${SITE}/#/item/${body.listing_id}`,
         });
-        await rpc("svc_attach_session", { p_order: order.order_id, p_session: s.id });
+        await rpc("bh_svc_attach_session", { p_order: order.order_id, p_session: s.id });
         return json({ url: s.url });
       }
 
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
             capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
           });
           account = a.id;
-          await rpc("svc_set_connect_account", { p_user: user.id, p_account: account });
+          await rpc("bh_svc_set_connect_account", { p_user: user.id, p_account: account });
         }
         const link = await stripe.accountLinks.create({
           account,
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
         const priv = await getPrivate(user.id);
         if (!priv.stripe_account_id) return json({ charges_enabled: false, payouts_enabled: false });
         const a = await stripe.accounts.retrieve(priv.stripe_account_id);
-        await rpc("svc_update_connect_status", {
+        await rpc("bh_svc_update_connect_status", {
           p_account: a.id, p_charges: !!a.charges_enabled, p_payouts: !!a.payouts_enabled,
         });
         return json({ charges_enabled: a.charges_enabled, payouts_enabled: a.payouts_enabled });

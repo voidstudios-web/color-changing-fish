@@ -806,13 +806,13 @@ function paintTop() {
 }
 async function loadItems() {
   if (!online() || Object.keys(S.items).length) return;
-  const { data } = await S.sb.from('shop_items').select('*').eq('active', true).order('price');
+  const { data } = await S.sb.from('bh_shop_items').select('*').eq('active', true).order('price');
   (data || []).forEach(i => S.items[i.id] = i); avCache.clear();
 }
 async function loadMe() {
   const [{ data: p, error }, { data: w }] = await Promise.all([
-    S.sb.from('profiles').select('*').eq('id', S.user.id).single(),
-    S.sb.from('wallets').select('bux').eq('user_id', S.user.id).single(),
+    S.sb.from('bh_profiles').select('*').eq('id', S.user.id).single(),
+    S.sb.from('bh_wallets').select('bux').eq('user_id', S.user.id).single(),
   ]);
   if (error) throw error;
   S.profile = p; S.bux = w?.bux || 0; paintTop();
@@ -821,12 +821,12 @@ function subscribeMe() {
   if (S.channel) S.sb.removeChannel(S.channel);
   const uid = S.user.id;
   S.channel = S.sb.channel('me-' + uid)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${uid}` }, ({ new: n }) => { if (n?.bux !== undefined) { S.bux = n.bux; paintTop(); } })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient=eq.${uid}` }, ({ new: m }) => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bh_wallets', filter: `user_id=eq.${uid}` }, ({ new: n }) => { if (n?.bux !== undefined) { S.bux = n.bux; paintTop(); } })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bh_messages', filter: `recipient=eq.${uid}` }, ({ new: m }) => {
       if (S.chatWith === m.sender && S.onMsg) S.onMsg(m);
       else { S.unread++; paintTop(); toast('New message'); }
     })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friendships', filter: `addressee=eq.${uid}` }, () => toast('New friend request'))
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bh_friendships', filter: `addressee=eq.${uid}` }, () => toast('New friend request'))
     .subscribe();
 }
 async function afterAuth(event) {
@@ -835,10 +835,10 @@ async function afterAuth(event) {
     if (S.user) {
       await loadMe();
       subscribeMe();
-      const { count } = await S.sb.from('messages').select('id', { count: 'exact', head: true }).eq('recipient', S.user.id).is('read_at', null);
+      const { count } = await S.sb.from('bh_messages').select('id', { count: 'exact', head: true }).eq('recipient', S.user.id).is('read_at', null);
       S.unread = count || 0; paintTop();
       const ref = lsGet('bh_ref');
-      if (ref) { lsSet('bh_ref', null); rpc('apply_referral', { p_code: ref }).then(r => toast(`Invite bonus: +${r.bonus} Bux`, 'ok')).catch(() => {}); }
+      if (ref) { lsSet('bh_ref', null); rpc('bh_apply_referral', { p_code: ref }).then(r => toast(`Invite bonus: +${r.bonus} Bux`, 'ok')).catch(() => {}); }
     } else {
       S.profile = null; S.bux = 0; S.unread = 0;
       if (S.channel) { S.sb.removeChannel(S.channel); S.channel = null; }
@@ -870,7 +870,7 @@ function boot() {
   });
   // Keepalive: ping at most once per 12h per device so the project never idles.
   const last = +lsGet('bh_ping', 0);
-  if (Date.now() - last > 432e5) { lsSet('bh_ping', String(Date.now())); S.sb.rpc('keepalive').then(() => {}, () => {}); }
+  if (Date.now() - last > 432e5) { lsSet('bh_ping', String(Date.now())); S.sb.rpc('bh_keepalive').then(() => {}, () => {}); }
 }
 
 /* =====================================================================
@@ -891,7 +891,7 @@ async function viewHome() {
   <h2 style="margin-top:22px">Community games</h2>
   <div id="cgList"><div class="spin"></div></div>`;
   if (!online()) { $('#cgList').innerHTML = '<div class="card empty">Connect Supabase to see community games. <a href="#/setup">Set up</a></div>'; return; }
-  const { data, error } = await S.sb.from('community_games').select(`id,title,plays,level,theme,creator:profiles(${PROFILE_COLS})`).eq('published', true).order('plays', { ascending: false }).limit(24);
+  const { data, error } = await S.sb.from('bh_community_games').select(`id,title,plays,level,theme,creator:bh_profiles(${PROFILE_COLS})`).eq('published', true).order('plays', { ascending: false }).limit(24);
   if (error) throw error;
   $('#cgList').innerHTML = data.length ? `<div class="grid">${data.map(cg => gameCard('#/cg/' + cg.id, levelThumb(cg.level, cg.theme), cg.title, `by ${esc(cg.creator?.username)} · ${fmt(cg.plays)} plays`)).join('')}</div>`
     : '<div class="card empty">No community games yet. <a href="#/create">Be the first to build one.</a></div>';
@@ -939,7 +939,7 @@ function playScreen({ title, back, make, onSubmit, lbGame, extra = '' }) {
     if (!lbGame || !$('#lb')) return;
     if (!online()) { $('#lb').textContent = 'Connect Supabase to see scores.'; return; }
     try {
-      const rows = await rpc('leaderboard', { p_game: lbGame });
+      const rows = await rpc('bh_leaderboard', { p_game: lbGame });
       $('#lb').innerHTML = rows.length ? rows.map((r, i) => `<div class="li"><b>#${i + 1}</b><span class="grow">${nameTag(r)}</span><b>${fmt(r.best)}</b></div>`).join('') : 'No scores yet. Be first!';
     } catch (e) { $('#lb').textContent = e.message; }
   };
@@ -951,15 +951,15 @@ function playScreen({ title, back, make, onSubmit, lbGame, extra = '' }) {
 async function viewGame(id) {
   const gm = GAME[id]; if (!gm) { view.innerHTML = '<div class="card empty">Game not found</div>'; return; }
   playScreen({ title: gm.name, back: '#/', make: gm.make, lbGame: id,
-    onSubmit: (score, dur) => rpc('submit_score', { p_game: id, p_score: Math.floor(score), p_duration: dur }),
+    onSubmit: (score, dur) => rpc('bh_submit_score', { p_game: id, p_score: Math.floor(score), p_duration: dur }),
     extra: `<p class="muted center">${esc(gm.desc)}</p>` });
 }
 async function viewCommunityGame(id) {
   if (!online()) return viewSetup();
-  const { data: cg, error } = await S.sb.from('community_games').select(`*,creator:profiles(${PROFILE_COLS})`).eq('id', id).single();
+  const { data: cg, error } = await S.sb.from('bh_community_games').select(`*,creator:bh_profiles(${PROFILE_COLS})`).eq('id', id).single();
   if (error) throw error;
   playScreen({ title: cg.title, back: '#/', make: makePlatformer(cg.level, cg.theme),
-    onSubmit: (score, dur) => rpc('submit_community_play', { p_game: id, p_score: Math.floor(score), p_duration: dur }),
+    onSubmit: (score, dur) => rpc('bh_submit_community_play', { p_game: id, p_score: Math.floor(score), p_duration: dur }),
     extra: `<div class="card" style="margin-top:14px"><div class="row">${avImg(cg.creator)}<div class="grow">${nameTag(cg.creator)}<div class="muted small">${fmt(cg.plays)} plays</div></div>${S.user?.id === cg.creator?.id ? `<a class="btn sm" href="#/create/${cg.id}">Edit</a>` : ''}</div>${cg.description ? `<p class="post-body">${esc(cg.description)}</p>` : ''}</div>` });
 }
 
@@ -969,14 +969,14 @@ async function viewCreate(editId) {
   const resume = createResume; createResume = null;
   let level = defaultLevel(), theme = { sky: '#7cc6ff', block: '#2d7ff9', player: '#ffd23f' }, meta = { title: '', description: '' }, mine = [];
   if (editId && online()) {
-    const { data, error } = await S.sb.from('community_games').select('*').eq('id', editId).single();
+    const { data, error } = await S.sb.from('bh_community_games').select('*').eq('id', editId).single();
     if (error) throw error;
     level = { tiles: cleanLevel(data.level) }; theme = { ...theme, ...data.theme }; meta = data;
   } else {
     const draft = lsGet('bh_draft'); if (draft) try { const d = JSON.parse(draft); level = { tiles: cleanLevel(d.level) }; theme = { ...theme, ...d.theme }; } catch {}
   }
   if (resume) { level = { tiles: resume.tiles }; theme = resume.theme; meta = { ...meta, title: resume.title, description: resume.description }; }
-  if (S.user) { const { data } = await S.sb.from('community_games').select('id,title,plays,published').eq('creator', S.user.id).order('updated_at', { ascending: false }); mine = data || []; }
+  if (S.user) { const { data } = await S.sb.from('bh_community_games').select('id,title,plays,published').eq('creator', S.user.id).order('updated_at', { ascending: false }); mine = data || []; }
   let tiles = level.tiles.split(''), tool = 1, testing = null;
   view.innerHTML = `
   <h1>${editId ? 'Edit game' : 'Game creator'}</h1>
@@ -1034,11 +1034,11 @@ async function viewCreate(editId) {
     const title = $('#gTitle').value.trim(); if (title.length < 3) return toast('Give your game a title (3+ letters).', 'err');
     const row = { title, description: $('#gDesc').value.trim() || null, level: { tiles: tiles.join('') }, theme: th(), published: true };
     try {
-      if (editId) { const { error } = await S.sb.from('community_games').update(row).eq('id', editId); if (error) throw error; toast('Saved', 'ok'); location.hash = '#/cg/' + editId; }
-      else { const { data, error } = await S.sb.from('community_games').insert({ ...row, creator: S.user.id }).select('id').single(); if (error) throw error; lsSet('bh_draft', null); toast('Published!', 'ok'); location.hash = '#/cg/' + data.id; }
+      if (editId) { const { error } = await S.sb.from('bh_community_games').update(row).eq('id', editId); if (error) throw error; toast('Saved', 'ok'); location.hash = '#/cg/' + editId; }
+      else { const { data, error } = await S.sb.from('bh_community_games').insert({ ...row, creator: S.user.id }).select('id').single(); if (error) throw error; lsSet('bh_draft', null); toast('Published!', 'ok'); location.hash = '#/cg/' + data.id; }
     } catch (e) { fail(e); }
   };
-  if (editId) $('#del').onclick = async () => { if (!confirm('Delete this game for good?')) return; const { error } = await S.sb.from('community_games').delete().eq('id', editId); if (error) return fail(error); toast('Deleted'); location.hash = '#/create'; };
+  if (editId) $('#del').onclick = async () => { if (!confirm('Delete this game for good?')) return; const { error } = await S.sb.from('bh_community_games').delete().eq('id', editId); if (error) return fail(error); toast('Deleted'); location.hash = '#/create'; };
 }
 
 /* ---------- Forum ---------- */
@@ -1050,7 +1050,7 @@ async function viewForum() {
   <div class="tabs"><a class="tab ${!cat ? 'on' : ''}" href="#/forum">All</a>${Object.entries(CATS).map(([k, v]) => `<a class="tab ${cat === k ? 'on' : ''}" href="#/forum?cat=${k}">${v}</a>`).join('')}</div>
   <div class="card" id="posts"><div class="spin"></div></div>`;
   $('#newPost').onclick = () => { if (needLogin()) return; newPostModal(cat); };
-  let qy = S.sb.from('forum_posts').select(`id,title,category,pinned,reply_count,last_activity,author:profiles(${PROFILE_COLS})`).order('pinned', { ascending: false }).order('last_activity', { ascending: false }).limit(50);
+  let qy = S.sb.from('bh_forum_posts').select(`id,title,category,pinned,reply_count,last_activity,author:bh_profiles(${PROFILE_COLS})`).order('pinned', { ascending: false }).order('last_activity', { ascending: false }).limit(50);
   if (cat) qy = qy.eq('category', cat);
   const { data, error } = await qy; if (error) throw error;
   $('#posts').innerHTML = data.length ? data.map(p => `<a class="li" style="text-decoration:none;color:inherit" href="#/post/${p.id}">${avImg(p.author)}<div class="grow"><b>${p.pinned ? '<span class="pill pending">Pinned</span> ' : ''}${esc(p.title)}</b><div class="small muted">${esc(p.author?.username)} · ${CATS[p.category]} · ${ago(p.last_activity)}</div></div><span class="pill">${p.reply_count}</span></a>`).join('') : '<div class="empty">No posts yet. Start the conversation.</div>';
@@ -1062,7 +1062,7 @@ function newPostModal(cat) {
     <div><label>Post</label><textarea id="pb" maxlength="5000" style="min-height:160px"></textarea></div>
     <div class="row"><button class="btn y grow" id="ps">Post</button><button class="btn w" data-close>Cancel</button></div></div>`, (m, close) => {
     $('#ps', m).onclick = async () => {
-      const { data, error } = await S.sb.from('forum_posts').insert({ author: S.user.id, category: $('#pc', m).value, title: $('#pt', m).value.trim(), body: $('#pb', m).value.trim() }).select('id').single();
+      const { data, error } = await S.sb.from('bh_forum_posts').insert({ author: S.user.id, category: $('#pc', m).value, title: $('#pt', m).value.trim(), body: $('#pb', m).value.trim() }).select('id').single();
       if (error) return fail(error); close(); location.hash = '#/post/' + data.id;
     };
   });
@@ -1070,8 +1070,8 @@ function newPostModal(cat) {
 async function viewPost(id) {
   if (!online()) return viewSetup();
   const [{ data: p, error }, { data: replies }] = await Promise.all([
-    S.sb.from('forum_posts').select(`*,author:profiles(${PROFILE_COLS})`).eq('id', id).single(),
-    S.sb.from('forum_replies').select(`*,author:profiles(${PROFILE_COLS})`).eq('post_id', id).order('created_at').limit(300),
+    S.sb.from('bh_forum_posts').select(`*,author:bh_profiles(${PROFILE_COLS})`).eq('id', id).single(),
+    S.sb.from('bh_forum_replies').select(`*,author:bh_profiles(${PROFILE_COLS})`).eq('post_id', id).order('created_at').limit(300),
   ]);
   if (error) throw error;
   const admin = S.profile?.is_admin, mine = S.user?.id === p.author?.id;
@@ -1085,10 +1085,10 @@ async function viewPost(id) {
   <h3 style="margin-top:16px">${p.reply_count} replies</h3>
   <div class="card">${(replies || []).map(r => `<div class="li" style="align-items:flex-start">${avImg(r.author)}<div class="grow">${nameTag(r.author)} <span class="small muted">${ago(r.created_at)}</span><div class="post-body">${esc(r.body)}</div></div>${S.user?.id === r.author?.id || admin ? `<button class="btn w sm" data-dr="${r.id}">x</button>` : ''}</div>`).join('') || '<div class="empty">No replies yet.</div>'}</div>
   <div class="card">${S.user ? '<textarea id="rb" maxlength="3000" placeholder="Write a reply"></textarea><button class="btn y block" style="margin-top:10px" id="rs">Reply</button>' : '<a href="#/login">Sign in</a> to reply.'}</div>`;
-  if ($('#rs')) $('#rs').onclick = async () => { const body = $('#rb').value.trim(); if (!body) return; const { error } = await S.sb.from('forum_replies').insert({ post_id: +id, author: S.user.id, body }); if (error) return fail(error); render(); };
-  if ($('#delP')) $('#delP').onclick = async () => { if (!confirm('Delete post?')) return; const { error } = await S.sb.from('forum_posts').delete().eq('id', id); if (error) return fail(error); location.hash = '#/forum'; };
-  if ($('#pinP')) $('#pinP').onclick = () => rpc('admin_pin_post', { p_post: +id, p_pinned: !p.pinned }).then(render, fail);
-  $$('[data-dr]').forEach(b => b.onclick = async () => { const { error } = await S.sb.from('forum_replies').delete().eq('id', b.dataset.dr); if (error) return fail(error); render(); });
+  if ($('#rs')) $('#rs').onclick = async () => { const body = $('#rb').value.trim(); if (!body) return; const { error } = await S.sb.from('bh_forum_replies').insert({ post_id: +id, author: S.user.id, body }); if (error) return fail(error); render(); };
+  if ($('#delP')) $('#delP').onclick = async () => { if (!confirm('Delete post?')) return; const { error } = await S.sb.from('bh_forum_posts').delete().eq('id', id); if (error) return fail(error); location.hash = '#/forum'; };
+  if ($('#pinP')) $('#pinP').onclick = () => rpc('bh_admin_pin_post', { p_post: +id, p_pinned: !p.pinned }).then(render, fail);
+  $$('[data-dr]').forEach(b => b.onclick = async () => { const { error } = await S.sb.from('bh_forum_replies').delete().eq('id', b.dataset.dr); if (error) return fail(error); render(); });
 }
 
 /* ---------- Shop + avatar ---------- */
@@ -1096,7 +1096,7 @@ async function viewShop() {
   if (!online()) return viewSetup();
   await loadItems();
   let owned = new Set();
-  if (S.user) { const { data } = await S.sb.from('inventory').select('item_id').eq('user_id', S.user.id); owned = new Set((data || []).map(r => r.item_id)); }
+  if (S.user) { const { data } = await S.sb.from('bh_inventory').select('item_id').eq('user_id', S.user.id); owned = new Set((data || []).map(r => r.item_id)); }
   const plus = S.profile?.plus_until && new Date(S.profile.plus_until) > new Date();
   const kind = q('k') || 'hat';
   const items = Object.values(S.items).filter(i => i.kind === kind);
@@ -1110,10 +1110,10 @@ async function viewShop() {
   $$('[data-buy]').forEach(b => b.onclick = async () => {
     if (needLogin()) return; const it = S.items[b.dataset.buy];
     if (!confirm(`Buy ${it.name} for ${it.price} Bux?`)) return;
-    try { S.bux = await rpc('buy_shop_item', { p_item: it.id }); paintTop(); toast('Bought ' + it.name, 'ok'); render(); } catch (e) { fail(e); }
+    try { S.bux = await rpc('bh_buy_shop_item', { p_item: it.id }); paintTop(); toast('Bought ' + it.name, 'ok'); render(); } catch (e) { fail(e); }
   });
-  $$('[data-eq]').forEach(b => b.onclick = async () => { try { S.profile.equipped = await rpc('equip_item', { p_item: b.dataset.eq }); paintTop(); render(); } catch (e) { fail(e); } });
-  $$('[data-un]').forEach(b => b.onclick = async () => { try { S.profile.equipped = await rpc('unequip_item', { p_kind: b.dataset.un }); paintTop(); render(); } catch (e) { fail(e); } });
+  $$('[data-eq]').forEach(b => b.onclick = async () => { try { S.profile.equipped = await rpc('bh_equip_item', { p_item: b.dataset.eq }); paintTop(); render(); } catch (e) { fail(e); } });
+  $$('[data-un]').forEach(b => b.onclick = async () => { try { S.profile.equipped = await rpc('bh_unequip_item', { p_kind: b.dataset.un }); paintTop(); render(); } catch (e) { fail(e); } });
 }
 async function viewAvatar() {
   if (needLogin()) return;
@@ -1124,16 +1124,16 @@ async function viewAvatar() {
   const draw = () => drawAvatar($('#avc').getContext('2d'), 260, av, S.profile.equipped);
   draw();
   $$('[data-c]').forEach(i => i.oninput = () => { av[i.dataset.c] = i.value; draw(); });
-  $('#sv').onclick = async () => { const { error } = await S.sb.from('profiles').update({ avatar: av }).eq('id', S.user.id); if (error) return fail(error); S.profile.avatar = av; paintTop(); toast('Saved', 'ok'); };
+  $('#sv').onclick = async () => { const { error } = await S.sb.from('bh_profiles').update({ avatar: av }).eq('id', S.user.id); if (error) return fail(error); S.profile.avatar = av; paintTop(); toast('Saved', 'ok'); };
 }
 
 /* ---------- Bux: gift codes, packs, referrals ---------- */
 async function viewBux() {
   if (needLogin()) return;
   const [{ data: codes }, { data: ledger }, stats] = await Promise.all([
-    S.sb.from('gift_codes').select('code,bux,redeemed_at,created_at').eq('purchased_by', S.user.id).order('created_at', { ascending: false }),
-    S.sb.from('bux_ledger').select('delta,reason,created_at').eq('user_id', S.user.id).order('created_at', { ascending: false }).limit(20),
-    rpc('my_referral_stats'),
+    S.sb.from('bh_gift_codes').select('code,bux,redeemed_at,created_at').eq('purchased_by', S.user.id).order('created_at', { ascending: false }),
+    S.sb.from('bh_bux_ledger').select('delta,reason,created_at').eq('user_id', S.user.id).order('created_at', { ascending: false }).limit(20),
+    rpc('bh_my_referral_stats'),
   ]);
   const link = location.origin + location.pathname + '?ref=' + S.profile.referral_code;
   view.innerHTML = `<h1>Bux</h1>
@@ -1149,13 +1149,13 @@ async function viewBux() {
     ${!stats.used_code ? '<div class="row" style="margin-top:12px"><input type="text" id="refc" placeholder="Got an invite code?" style="flex:1;min-width:0"><button class="btn w" id="refb">Apply</button></div>' : ''}
   </div>
   <div class="card"><h3>History</h3>${(ledger || []).map(l => `<div class="li"><span class="grow">${esc(l.reason)} <span class="small muted">${ago(l.created_at)}</span></span><b style="color:${l.delta > 0 ? 'var(--green)' : 'var(--red)'}">${l.delta > 0 ? '+' : ''}${fmt(l.delta)}</b></div>`).join('') || '<div class="empty">Nothing yet</div>'}</div>`;
-  const redeem = async code => { try { const r = await rpc('redeem_gift_code', { p_code: code }); if (!r.ok) return toast(r.error, 'err'); S.bux = r.balance; paintTop(); toast(`+${fmt(r.bux)} Bux!`, 'ok'); render(); } catch (e) { fail(e); } };
+  const redeem = async code => { try { const r = await rpc('bh_redeem_gift_code', { p_code: code }); if (!r.ok) return toast(r.error, 'err'); S.bux = r.balance; paintTop(); toast(`+${fmt(r.bux)} Bux!`, 'ok'); render(); } catch (e) { fail(e); } };
   $('#rd').onclick = () => $('#gc').value.trim() && redeem($('#gc').value);
   $$('[data-use]').forEach(b => b.onclick = () => redeem(b.dataset.use));
   $$('[data-copy]').forEach(b => b.onclick = () => navigator.clipboard.writeText(b.dataset.copy).then(() => toast('Copied', 'ok'), () => toast(b.dataset.copy)));
   $$('[data-pack]').forEach(b => b.onclick = async () => { b.disabled = true; try { location.href = (await fnCall('bux', { pack: b.dataset.pack })).url; } catch (e) { fail(e); b.disabled = false; } });
   if ($('#share')) $('#share').onclick = () => navigator.share({ title: 'Join me on Blockhub', url: link }).catch(() => {});
-  if ($('#refb')) $('#refb').onclick = async () => { try { const r = await rpc('apply_referral', { p_code: $('#refc').value }); S.bux = r.balance; paintTop(); toast(`+${r.bonus} Bux!`, 'ok'); render(); } catch (e) { fail(e); } };
+  if ($('#refb')) $('#refb').onclick = async () => { try { const r = await rpc('bh_apply_referral', { p_code: $('#refc').value }); S.bux = r.balance; paintTop(); toast(`+${r.bonus} Bux!`, 'ok'); render(); } catch (e) { fail(e); } };
 }
 
 /* ---------- Plus ---------- */
@@ -1169,7 +1169,7 @@ async function viewPlus() {
   <div class="card">${plus ? '<button class="btn y block" id="stip">Claim monthly 500 Bux</button><button class="btn w block" style="margin-top:10px" id="portal">Manage subscription</button>' : '<button class="btn p block" id="sub">Subscribe with Stripe</button><p class="muted small center">Billed monthly. Cancel any time.</p>'}</div>`;
   if ($('#sub')) $('#sub').onclick = async () => { if (needLogin()) return; try { location.href = (await fnCall('plus')).url; } catch (e) { fail(e); } };
   if ($('#portal')) $('#portal').onclick = async () => { try { location.href = (await fnCall('portal')).url; } catch (e) { fail(e); } };
-  if ($('#stip')) $('#stip').onclick = async () => { try { S.bux = await rpc('claim_plus_stipend'); paintTop(); toast('+500 Bux', 'ok'); } catch (e) { fail(e); } };
+  if ($('#stip')) $('#stip').onclick = async () => { try { S.bux = await rpc('bh_claim_plus_stipend'); paintTop(); toast('+500 Bux', 'ok'); } catch (e) { fail(e); } };
 }
 
 /* ---------- Marketplace ---------- */
@@ -1177,7 +1177,7 @@ const stars = n => '<span class="stars">' + '★'.repeat(Math.round(n)) + '☆'.
 const listingImg = l => l.image_url ? `<img alt="" loading="lazy" src="${esc(l.image_url)}" referrerpolicy="no-referrer">` : `<img alt="" src="${avatarURL({ avatar: { torso: COLORS[l.title.length % 7] } }, 200)}">`;
 async function viewMarket() {
   if (!online()) return viewSetup();
-  const { data, error } = await S.sb.from('market_listings').select(`id,title,price_cents,image_url,seller:profiles(${PROFILE_COLS})`).eq('status', 'approved').order('created_at', { ascending: false }).limit(60);
+  const { data, error } = await S.sb.from('bh_market_listings').select(`id,title,price_cents,image_url,seller:bh_profiles(${PROFILE_COLS})`).eq('status', 'approved').order('created_at', { ascending: false }).limit(60);
   if (error) throw error;
   view.innerHTML = `<div class="row"><h1 class="grow">Marketplace</h1><a class="btn y" href="#/sell">Sell</a><a class="btn w" href="#/orders">Orders</a></div>
   <p class="muted">Real-money items from creators. Every listing is reviewed by an admin. Payments go through Stripe.</p>
@@ -1185,11 +1185,11 @@ async function viewMarket() {
 }
 async function viewItem(id) {
   if (!online()) return viewSetup();
-  const { data: l, error } = await S.sb.from('market_listings').select(`*,seller:profiles(${PROFILE_COLS})`).eq('id', id).single();
+  const { data: l, error } = await S.sb.from('bh_market_listings').select(`*,seller:bh_profiles(${PROFILE_COLS})`).eq('id', id).single();
   if (error) throw error;
   const [{ data: rating }, { data: reviews }] = await Promise.all([
-    S.sb.from('seller_ratings').select('*').eq('seller', l.seller.id).maybeSingle(),
-    S.sb.from('seller_reviews').select(`rating,body,created_at,reviewer:profiles!seller_reviews_reviewer_fkey(${PROFILE_COLS})`).eq('seller', l.seller.id).order('created_at', { ascending: false }).limit(10),
+    S.sb.from('bh_seller_ratings').select('*').eq('seller', l.seller.id).maybeSingle(),
+    S.sb.from('bh_seller_reviews').select(`rating,body,created_at,reviewer:bh_profiles!bh_seller_reviews_reviewer_fkey(${PROFILE_COLS})`).eq('seller', l.seller.id).order('created_at', { ascending: false }).limit(10),
   ]);
   view.innerHTML = `<a class="btn w sm" href="#/market">Back</a>
   <div class="card" style="margin-top:12px"><div class="gcard" style="box-shadow:none"><div class="th">${listingImg(l)}</div></div>
@@ -1200,15 +1200,15 @@ async function viewItem(id) {
   <div class="card"><h3>Seller</h3><div class="row">${avImg(l.seller)}<div class="grow">${nameTag(l.seller)}<div class="small">${rating ? `${stars(rating.avg_rating)} ${rating.avg_rating} (${rating.reviews})` : '<span class="muted">No reviews yet</span>'}</div></div></div>
     ${(reviews || []).map(r => `<div class="li" style="align-items:flex-start"><div class="grow">${stars(r.rating)} <span class="small muted">${esc(r.reviewer?.username)} · ${ago(r.created_at)}</span>${r.body ? `<div class="post-body">${esc(r.body)}</div>` : ''}</div></div>`).join('')}</div>`;
   if ($('#buy')) $('#buy').onclick = async () => { if (needLogin()) return; $('#buy').disabled = true; try { location.href = (await fnCall('market', { listing_id: id })).url; } catch (e) { fail(e); $('#buy').disabled = false; } };
-  if ($('#rm')) $('#rm').onclick = async () => { if (!confirm('Remove listing?')) return; try { await rpc('remove_listing', { p_listing: id }); toast('Removed'); location.hash = '#/sell'; } catch (e) { fail(e); } };
+  if ($('#rm')) $('#rm').onclick = async () => { if (!confirm('Remove listing?')) return; try { await rpc('bh_remove_listing', { p_listing: id }); toast('Removed'); location.hash = '#/sell'; } catch (e) { fail(e); } };
 }
 async function viewSell() {
   if (needLogin()) return;
-  let { data: priv } = await S.sb.from('profile_private').select('*').eq('user_id', S.user.id).single();
+  let { data: priv } = await S.sb.from('bh_profile_private').select('*').eq('user_id', S.user.id).single();
   if (priv?.stripe_account_id && !priv.charges_enabled) { try { const r = await fnCall('connect_refresh'); priv = { ...priv, ...r }; } catch {} }
   const [{ data: mine }, { data: sales }] = await Promise.all([
-    S.sb.from('market_listings').select('*').eq('seller', S.user.id).order('created_at', { ascending: false }),
-    S.sb.from('market_orders').select('id,amount_cents,fee_cents,status,paid_at,listing:market_listings(title)').eq('seller', S.user.id).eq('status', 'paid').order('paid_at', { ascending: false }).limit(30),
+    S.sb.from('bh_market_listings').select('*').eq('seller', S.user.id).order('created_at', { ascending: false }),
+    S.sb.from('bh_market_orders').select('id,amount_cents,fee_cents,status,paid_at,listing:bh_market_listings(title)').eq('seller', S.user.id).eq('status', 'paid').order('paid_at', { ascending: false }).limit(30),
   ]);
   const ready = priv?.charges_enabled;
   view.innerHTML = `<h1>Sell on the marketplace</h1>
@@ -1226,23 +1226,23 @@ async function viewSell() {
   if ($('#dash')) $('#dash').onclick = async () => { try { location.href = (await fnCall('connect_dashboard')).url; } catch (e) { fail(e); } };
   if ($('#lsub')) $('#lsub').onclick = async () => {
     try {
-      await rpc('create_listing', { p_title: $('#lt').value, p_description: $('#ld').value, p_price_cents: Math.round(parseFloat($('#lp').value) * 100), p_image_url: $('#li').value, p_stock: parseInt($('#ls').value) || 1, p_delivery: $('#ldl').value });
+      await rpc('bh_create_listing', { p_title: $('#lt').value, p_description: $('#ld').value, p_price_cents: Math.round(parseFloat($('#lp').value) * 100), p_image_url: $('#li').value, p_stock: parseInt($('#ls').value) || 1, p_delivery: $('#ldl').value });
       toast('Submitted! An admin will review it.', 'ok'); render();
     } catch (e) { fail(e); }
   };
 }
 async function viewOrders() {
   if (needLogin()) return;
-  const { data, error } = await S.sb.from('market_orders').select(`id,status,amount_cents,created_at,paid_at,listing:market_listings(id,title),seller_p:profiles!market_orders_seller_fkey(${PROFILE_COLS})`).eq('buyer', S.user.id).order('created_at', { ascending: false });
+  const { data, error } = await S.sb.from('bh_market_orders').select(`id,status,amount_cents,created_at,paid_at,listing:bh_market_listings(id,title),seller_p:bh_profiles!bh_market_orders_seller_fkey(${PROFILE_COLS})`).eq('buyer', S.user.id).order('created_at', { ascending: false });
   if (error) throw error;
-  const { data: revs } = await S.sb.from('seller_reviews').select('order_id').eq('reviewer', S.user.id);
+  const { data: revs } = await S.sb.from('bh_seller_reviews').select('order_id').eq('reviewer', S.user.id);
   const reviewed = new Set((revs || []).map(r => r.order_id));
   const list = data.filter(o => o.status !== 'expired');
   view.innerHTML = `<h1>My orders</h1><div class="card">${list.map(o => `<div class="li" style="flex-wrap:wrap"><div class="grow"><a class="name" href="#/item/${o.listing?.id}">${esc(o.listing?.title)}</a><div class="small muted">from ${esc(o.seller_p?.username)} · ${ago(o.created_at)}</div></div><b>${money(o.amount_cents)}</b><span class="pill ${o.status}">${o.status}</span>
     ${o.status === 'paid' ? `<div class="row" style="width:100%"><button class="btn sm g" data-get="${o.id}">Get item</button>${reviewed.has(o.id) ? '<span class="small muted">Reviewed</span>' : `<button class="btn sm w" data-rev="${o.id}">Review seller</button>`}</div>` : ''}</div>`).join('') || '<div class="empty">No orders yet. <a href="#/market">Browse the market</a></div>'}</div>`;
-  $$('[data-get]').forEach(b => b.onclick = async () => { try { const d = await rpc('get_order_delivery', { p_order: b.dataset.get }); modal(`<h2>Your item</h2><div class="code post-body">${esc(d)}</div><button class="btn w block" style="margin-top:12px" data-close>Close</button>`); } catch (e) { fail(e); } });
+  $$('[data-get]').forEach(b => b.onclick = async () => { try { const d = await rpc('bh_get_order_delivery', { p_order: b.dataset.get }); modal(`<h2>Your item</h2><div class="code post-body">${esc(d)}</div><button class="btn w block" style="margin-top:12px" data-close>Close</button>`); } catch (e) { fail(e); } });
   $$('[data-rev]').forEach(b => b.onclick = () => modal(`<h2>Review seller</h2><div class="stack"><select id="rr">${[5, 4, 3, 2, 1].map(n => `<option value="${n}">${n} stars</option>`).join('')}</select><textarea id="rt" maxlength="500" placeholder="How was it?"></textarea><button class="btn y block" id="rsv">Submit</button></div>`, (m, close) => {
-    $('#rsv', m).onclick = async () => { try { await rpc('submit_seller_review', { p_order: b.dataset.rev, p_rating: +$('#rr', m).value, p_body: $('#rt', m).value }); close(); toast('Thanks!', 'ok'); render(); } catch (e) { fail(e); } };
+    $('#rsv', m).onclick = async () => { try { await rpc('bh_submit_seller_review', { p_order: b.dataset.rev, p_rating: +$('#rr', m).value, p_body: $('#rt', m).value }); close(); toast('Thanks!', 'ok'); render(); } catch (e) { fail(e); } };
   }));
 }
 
@@ -1250,12 +1250,12 @@ async function viewOrders() {
 async function viewFriends() {
   if (needLogin()) return;
   const uid = S.user.id;
-  const { data: fr, error } = await S.sb.from('friendships').select('*').or(`requester.eq.${uid},addressee.eq.${uid}`);
+  const { data: fr, error } = await S.sb.from('bh_friendships').select('*').or(`requester.eq.${uid},addressee.eq.${uid}`);
   if (error) throw error;
   const ids = [...new Set(fr.flatMap(f => [f.requester, f.addressee]).filter(x => x !== uid))];
-  const { data: people } = ids.length ? await S.sb.from('profiles').select(PROFILE_COLS).in('id', ids) : { data: [] };
+  const { data: people } = ids.length ? await S.sb.from('bh_profiles').select(PROFILE_COLS).in('id', ids) : { data: [] };
   const P = Object.fromEntries((people || []).map(p => [p.id, p]));
-  const { data: unreadRows } = await S.sb.from('messages').select('sender').eq('recipient', uid).is('read_at', null).limit(500);
+  const { data: unreadRows } = await S.sb.from('bh_messages').select('sender').eq('recipient', uid).is('read_at', null).limit(500);
   const unreadBy = {}; (unreadRows || []).forEach(r => unreadBy[r.sender] = (unreadBy[r.sender] || 0) + 1);
   const friends = fr.filter(f => f.status === 'accepted').map(f => P[f.requester === uid ? f.addressee : f.requester]).filter(Boolean);
   const incoming = fr.filter(f => f.status === 'pending' && f.addressee === uid).map(f => P[f.requester]).filter(Boolean);
@@ -1267,19 +1267,19 @@ async function viewFriends() {
   ${outgoing.length ? `<div class="card"><h3>Sent</h3>${outgoing.map(p => `<div class="li">${avImg(p)}<span class="grow">${nameTag(p)}</span><span class="pill pending">pending</span></div>`).join('')}</div>` : ''}`;
   const search = async () => {
     const term = $('#us').value.trim().replace(/[%_,()]/g, ''); if (term.length < 2) return;
-    const { data } = await S.sb.from('profiles').select(PROFILE_COLS).ilike('username', `%${term}%`).limit(15);
+    const { data } = await S.sb.from('bh_profiles').select(PROFILE_COLS).ilike('username', `%${term}%`).limit(15);
     $('#usr').innerHTML = (data || []).map(p => `<div class="li">${avImg(p)}<span class="grow">${nameTag(p)}</span></div>`).join('') || '<div class="empty">No one found</div>';
   };
   $('#usb').onclick = search; $('#us').onkeydown = e => e.key === 'Enter' && search();
-  $$('[data-acc]').forEach(b => b.onclick = () => rpc('respond_friend_request', { p_from: b.dataset.acc, p_accept: true }).then(render, fail));
-  $$('[data-dec]').forEach(b => b.onclick = () => rpc('respond_friend_request', { p_from: b.dataset.dec, p_accept: false }).then(render, fail));
+  $$('[data-acc]').forEach(b => b.onclick = () => rpc('bh_respond_friend_request', { p_from: b.dataset.acc, p_accept: true }).then(render, fail));
+  $$('[data-dec]').forEach(b => b.onclick = () => rpc('bh_respond_friend_request', { p_from: b.dataset.dec, p_accept: false }).then(render, fail));
 }
 async function viewChat(other) {
   if (needLogin()) return;
   const uid = S.user.id;
   const [{ data: p }, { data: msgs, error }] = await Promise.all([
-    S.sb.from('profiles').select(PROFILE_COLS).eq('id', other).single(),
-    S.sb.from('messages').select('*').or(`and(sender.eq.${uid},recipient.eq.${other}),and(sender.eq.${other},recipient.eq.${uid})`).order('created_at', { ascending: false }).limit(60),
+    S.sb.from('bh_profiles').select(PROFILE_COLS).eq('id', other).single(),
+    S.sb.from('bh_messages').select('*').or(`and(sender.eq.${uid},recipient.eq.${other}),and(sender.eq.${other},recipient.eq.${uid})`).order('created_at', { ascending: false }).limit(60),
   ]);
   if (error) throw error;
   view.innerHTML = `<div class="row"><a class="btn w sm" href="#/friends">Back</a>${avImg(p)}${nameTag(p)}</div>
@@ -1288,12 +1288,12 @@ async function viewChat(other) {
   const box = $('#msgs');
   const add = m => { box.insertAdjacentHTML('beforeend', `<div class="msg ${m.sender === uid ? 'me' : ''}">${esc(m.body)}</div>`); box.scrollTop = box.scrollHeight; };
   (msgs || []).reverse().forEach(add);
-  const markRead = async () => { const { count } = await S.sb.from('messages').update({ read_at: new Date().toISOString() }, { count: 'exact' }).eq('recipient', uid).eq('sender', other).is('read_at', null); S.unread = Math.max(0, S.unread - (count || 0)); paintTop(); };
+  const markRead = async () => { const { count } = await S.sb.from('bh_messages').update({ read_at: new Date().toISOString() }, { count: 'exact' }).eq('recipient', uid).eq('sender', other).is('read_at', null); S.unread = Math.max(0, S.unread - (count || 0)); paintTop(); };
   markRead();
   S.chatWith = other; S.onMsg = m => { add(m); markRead(); };
   const send = async () => {
     const body = $('#mt').value.trim(); if (!body) return; $('#mt').value = '';
-    const { data, error } = await S.sb.from('messages').insert({ sender: uid, recipient: other, body }).select().single();
+    const { data, error } = await S.sb.from('bh_messages').insert({ sender: uid, recipient: other, body }).select().single();
     if (error) { $('#mt').value = body; return fail(error.code === '42501' ? new Error('You can only message friends.') : error); }
     add(data);
   };
@@ -1302,20 +1302,20 @@ async function viewChat(other) {
 }
 async function viewProfile(username) {
   if (!online()) return viewSetup();
-  const { data: p, error } = await S.sb.from('profiles').select('*').ilike('username', username.replace(/[%_]/g, '\\$&')).single();
+  const { data: p, error } = await S.sb.from('bh_profiles').select('*').ilike('username', username.replace(/[%_]/g, '\\$&')).single();
   if (error) throw error;
   const me = S.user?.id === p.id;
   const [{ count: followers }, { count: following }, { data: games }, { data: rating }] = await Promise.all([
-    S.sb.from('follows').select('*', { count: 'exact', head: true }).eq('followee', p.id),
-    S.sb.from('follows').select('*', { count: 'exact', head: true }).eq('follower', p.id),
-    S.sb.from('community_games').select('id,title,plays,level,theme').eq('creator', p.id).eq('published', true).order('plays', { ascending: false }).limit(8),
-    S.sb.from('seller_ratings').select('*').eq('seller', p.id).maybeSingle(),
+    S.sb.from('bh_follows').select('*', { count: 'exact', head: true }).eq('followee', p.id),
+    S.sb.from('bh_follows').select('*', { count: 'exact', head: true }).eq('follower', p.id),
+    S.sb.from('bh_community_games').select('id,title,plays,level,theme').eq('creator', p.id).eq('published', true).order('plays', { ascending: false }).limit(8),
+    S.sb.from('bh_seller_ratings').select('*').eq('seller', p.id).maybeSingle(),
   ]);
   let isFollowing = false, fstate = null;
   if (S.user && !me) {
     const [{ data: f }, { data: fr }] = await Promise.all([
-      S.sb.from('follows').select('follower').eq('follower', S.user.id).eq('followee', p.id).maybeSingle(),
-      S.sb.from('friendships').select('*').or(`and(requester.eq.${S.user.id},addressee.eq.${p.id}),and(requester.eq.${p.id},addressee.eq.${S.user.id})`).maybeSingle(),
+      S.sb.from('bh_follows').select('follower').eq('follower', S.user.id).eq('followee', p.id).maybeSingle(),
+      S.sb.from('bh_friendships').select('*').or(`and(requester.eq.${S.user.id},addressee.eq.${p.id}),and(requester.eq.${p.id},addressee.eq.${S.user.id})`).maybeSingle(),
     ]);
     isFollowing = !!f; fstate = fr ? (fr.status === 'accepted' ? 'friends' : fr.requester === S.user.id ? 'sent' : 'incoming') : null;
   }
@@ -1328,11 +1328,11 @@ async function viewProfile(username) {
       ${fstate === 'friends' ? `<a class="btn g" href="#/chat/${p.id}">Message</a><button class="btn w sm" id="unf">Unfriend</button>` : fstate === 'sent' ? '<span class="pill pending">Request sent</span>' : `<button class="btn y" id="addf">${fstate === 'incoming' ? 'Accept friend' : 'Add friend'}</button>`}` : '<a class="btn" href="#/login">Sign in to follow</a>'}</div></div>
   ${games?.length ? `<h2 style="margin-top:16px">Games by ${esc(p.username)}</h2><div class="grid">${games.map(cg => gameCard('#/cg/' + cg.id, levelThumb(cg.level, cg.theme), cg.title, fmt(cg.plays) + ' plays')).join('')}</div>` : ''}`;
   if ($('#fol')) $('#fol').onclick = async () => {
-    const { error } = isFollowing ? await S.sb.from('follows').delete().eq('follower', S.user.id).eq('followee', p.id) : await S.sb.from('follows').insert({ follower: S.user.id, followee: p.id });
+    const { error } = isFollowing ? await S.sb.from('bh_follows').delete().eq('follower', S.user.id).eq('followee', p.id) : await S.sb.from('bh_follows').insert({ follower: S.user.id, followee: p.id });
     if (error) return fail(error); render();
   };
-  if ($('#addf')) $('#addf').onclick = () => rpc('send_friend_request', { p_target: p.id }).then(r => { toast(r === 'friends' ? 'You are now friends!' : 'Request sent', 'ok'); render(); }, fail);
-  if ($('#unf')) $('#unf').onclick = () => confirm('Remove friend?') && rpc('remove_friend', { p_other: p.id }).then(render, fail);
+  if ($('#addf')) $('#addf').onclick = () => rpc('bh_send_friend_request', { p_target: p.id }).then(r => { toast(r === 'friends' ? 'You are now friends!' : 'Request sent', 'ok'); render(); }, fail);
+  if ($('#unf')) $('#unf').onclick = () => confirm('Remove friend?') && rpc('bh_remove_friend', { p_other: p.id }).then(render, fail);
 }
 
 /* ---------- Account ---------- */
@@ -1381,7 +1381,7 @@ async function viewSettings() {
   <div class="card"><button class="btn r block" id="out">Sign out</button></div>`;
   $('#ss').onclick = async () => {
     const upd = { username: $('#su').value.trim(), display_name: $('#sd').value.trim() || null, bio: $('#sbio').value.trim() || null };
-    const { error } = await S.sb.from('profiles').update(upd).eq('id', S.user.id);
+    const { error } = await S.sb.from('bh_profiles').update(upd).eq('id', S.user.id);
     if (error) return fail(error.code === '23505' ? new Error('That username is taken') : error);
     Object.assign(S.profile, upd); paintTop(); toast('Saved', 'ok');
   };
@@ -1391,18 +1391,18 @@ async function viewSettings() {
 async function viewAdmin() {
   if (needLogin()) return;
   if (!S.profile?.is_admin) { view.innerHTML = '<div class="card empty">Admins only.</div>'; return; }
-  const { data: pend } = await S.sb.from('market_listings').select(`*,seller:profiles(${PROFILE_COLS})`).eq('status', 'pending').order('created_at');
+  const { data: pend } = await S.sb.from('bh_market_listings').select(`*,seller:bh_profiles(${PROFILE_COLS})`).eq('status', 'pending').order('created_at');
   view.innerHTML = `<h1>Admin</h1>
   <div class="card"><h3>Listings waiting for review (${pend?.length || 0})</h3>${(pend || []).map(l => `<div class="li" style="flex-wrap:wrap"><div class="grow"><b>${esc(l.title)}</b> · ${money(l.price_cents)} · ${nameTag(l.seller)}<div class="small post-body">${esc(l.description)}</div>${l.image_url ? `<div class="small muted">${esc(l.image_url)}</div>` : ''}</div><button class="btn sm g" data-ok="${l.id}">Approve</button><button class="btn sm r" data-no="${l.id}">Reject</button></div>`).join('') || '<div class="empty">All clear</div>'}</div>
   <div class="card stack"><h3>Verify a user</h3><input type="text" id="vu" placeholder="username"><div class="row"><button class="btn g grow" id="vy">Verify</button><button class="btn w grow" id="vn">Remove badge</button></div></div>
   <div class="card stack"><h3>Make gift codes</h3><div class="row"><input type="number" id="gn" value="5" min="1" max="100" style="flex:1"><input type="number" id="gb" value="500" min="1" style="flex:1"></div><button class="btn y block" id="gg">Generate (count, Bux each)</button><div id="gout"></div></div>
   <div class="card stack"><h3>Adjust Bux</h3><input type="text" id="au" placeholder="username"><input type="number" id="ad" placeholder="+/- amount"><input type="text" id="ar" placeholder="reason"><button class="btn w block" id="ab">Apply</button></div>`;
-  $$('[data-ok]').forEach(b => b.onclick = () => rpc('admin_review_listing', { p_listing: b.dataset.ok, p_approve: true, p_reason: null }).then(render, fail));
-  $$('[data-no]').forEach(b => b.onclick = () => { const r = prompt('Reason for rejecting?'); if (r !== null) rpc('admin_review_listing', { p_listing: b.dataset.no, p_approve: false, p_reason: r }).then(render, fail); });
-  $('#vy').onclick = () => rpc('admin_set_verified', { p_username: $('#vu').value.trim(), p_value: true }).then(() => toast('Verified', 'ok'), fail);
-  $('#vn').onclick = () => rpc('admin_set_verified', { p_username: $('#vu').value.trim(), p_value: false }).then(() => toast('Badge removed', 'ok'), fail);
-  $('#gg').onclick = async () => { try { const codes = await rpc('admin_create_gift_codes', { p_count: +$('#gn').value, p_bux: +$('#gb').value }); $('#gout').innerHTML = `<div class="code post-body">${codes.map(esc).join('\n')}</div>`; } catch (e) { fail(e); } };
-  $('#ab').onclick = () => rpc('admin_adjust_bux', { p_username: $('#au').value.trim(), p_delta: +$('#ad').value, p_reason: $('#ar').value }).then(v => toast('New balance ' + fmt(v), 'ok'), fail);
+  $$('[data-ok]').forEach(b => b.onclick = () => rpc('bh_admin_review_listing', { p_listing: b.dataset.ok, p_approve: true, p_reason: null }).then(render, fail));
+  $$('[data-no]').forEach(b => b.onclick = () => { const r = prompt('Reason for rejecting?'); if (r !== null) rpc('bh_admin_review_listing', { p_listing: b.dataset.no, p_approve: false, p_reason: r }).then(render, fail); });
+  $('#vy').onclick = () => rpc('bh_admin_set_verified', { p_username: $('#vu').value.trim(), p_value: true }).then(() => toast('Verified', 'ok'), fail);
+  $('#vn').onclick = () => rpc('bh_admin_set_verified', { p_username: $('#vu').value.trim(), p_value: false }).then(() => toast('Badge removed', 'ok'), fail);
+  $('#gg').onclick = async () => { try { const codes = await rpc('bh_admin_create_gift_codes', { p_count: +$('#gn').value, p_bux: +$('#gb').value }); $('#gout').innerHTML = `<div class="code post-body">${codes.map(esc).join('\n')}</div>`; } catch (e) { fail(e); } };
+  $('#ab').onclick = () => rpc('bh_admin_adjust_bux', { p_username: $('#au').value.trim(), p_delta: +$('#ad').value, p_reason: $('#ar').value }).then(v => toast('New balance ' + fmt(v), 'ok'), fail);
 }
 async function viewMore() {
   const links = [['#/shop', 'Item shop', 'y'], ['#/avatar', 'My avatar', 'w'], ['#/bux', 'Bux and gift codes', 'y'], ['#/plus', 'Blockhub Plus', 'p'], ['#/market', 'Marketplace', 'g'], ['#/sell', 'Sell items', 'w'], ['#/orders', 'My orders', 'w'], ['#/create', 'Game creator', 'o'], ['#/settings', 'Settings', 'w']];

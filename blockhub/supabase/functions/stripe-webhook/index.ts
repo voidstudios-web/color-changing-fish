@@ -34,7 +34,7 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const active = sub.status === "active" || sub.status === "trialing" || sub.status === "past_due";
   const until = active ? periodEnd(sub) : new Date().toISOString();
   const customer = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-  await rpc("svc_set_plus_by_customer", { p_customer: customer, p_until: until });
+  await rpc("bh_svc_set_plus_by_customer", { p_customer: customer, p_until: until });
 }
 
 async function verify(body: string, sig: string): Promise<Stripe.Event> {
@@ -67,19 +67,19 @@ Deno.serve(async (req) => {
         const kind = s.metadata?.kind;
         if (kind === "plus" && s.subscription) {
           const sub = await stripe.subscriptions.retrieve(s.subscription as string);
-          await rpc("svc_set_plus", { p_user: s.metadata!.user_id, p_until: periodEnd(sub) });
+          await rpc("bh_svc_set_plus", { p_user: s.metadata!.user_id, p_until: periodEnd(sub) });
         } else if (kind === "bux" && s.payment_status === "paid") {
-          await rpc("svc_issue_bux_code", {
+          await rpc("bh_svc_issue_bux_code", {
             p_user: s.metadata!.user_id, p_bux: Number(s.metadata!.bux), p_session: s.id,
           });
         } else if (kind === "market" && s.payment_status === "paid") {
-          await rpc("svc_mark_order_paid", { p_session: s.id, p_payment_intent: s.payment_intent as string });
+          await rpc("bh_svc_mark_order_paid", { p_session: s.id, p_payment_intent: s.payment_intent as string });
         }
         break;
       }
       case "checkout.session.expired": {
         const s = event.data.object as Stripe.Checkout.Session;
-        if (s.metadata?.kind === "market") await rpc("svc_expire_order", { p_session: s.id });
+        if (s.metadata?.kind === "market") await rpc("bh_svc_expire_order", { p_session: s.id });
         break;
       }
       case "customer.subscription.created":
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
         break;
       case "account.updated": {
         const a = event.data.object as Stripe.Account;
-        await rpc("svc_update_connect_status", {
+        await rpc("bh_svc_update_connect_status", {
           p_account: a.id, p_charges: !!a.charges_enabled, p_payouts: !!a.payouts_enabled,
         });
         break;
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       case "charge.refunded": {
         const c = event.data.object as Stripe.Charge;
         if (c.payment_intent) {
-          await rpc("svc_mark_order_refunded", {
+          await rpc("bh_svc_mark_order_refunded", {
             p_payment_intent: typeof c.payment_intent === "string" ? c.payment_intent : c.payment_intent.id,
           });
         }

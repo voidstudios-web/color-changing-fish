@@ -1,7 +1,7 @@
 name: Supabase keepalive
 
 # Free Supabase projects pause after 7 days with no API traffic.
-# This pings the keepalive() function every 3 days.
+# This pings the bh_keepalive() function every 3 days.
 # Add two repo secrets: SUPABASE_URL and SUPABASE_ANON_KEY.
 on:
   schedule:
@@ -17,7 +17,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/keepalive" \
+          curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/bh_keepalive" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
