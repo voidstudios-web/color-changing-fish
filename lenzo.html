@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lenzo Market</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Lenzo Market: buy and sell digital goods with a Lenzo account. ID-verified sellers and escrow on every order.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: sticky top bar, one centered column, market grid of listing cards, panels as tabbed workspaces. */
+:root{
+  --bg:#f4f5f9;--surface:#ffffff;--surface-2:#eceff5;--line:#dce0ea;--fg:#141824;--muted:#5b6377;
+  --accent:#2a46d8;--accent-2:#1f37b3;--accent-fg:#ffffff;
+  --ok:#1b8550;--warn:#a86200;--bad:#c53434;
+  --t1:#2a46d8;--t2:#0b8574;--t3:#b4501c;--t4:#7a3fb0;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1118;--surface:#161a24;--surface-2:#1e2331;--line:#2b3244;--fg:#e8ebf2;--muted:#959eb2;
+  --accent:#8196ff;--accent-2:#a2b1ff;--accent-fg:#0e1118;--ok:#4cc98a;--warn:#f0ad4a;--bad:#f27474;
+  --t1:#8196ff;--t2:#3fd0bb;--t3:#f08a55;--t4:#c28af2;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1118;--surface:#161a24;--surface-2:#1e2331;--line:#2b3244;--fg:#e8ebf2;--muted:#959eb2;
+  --accent:#8196ff;--accent-2:#a2b1ff;--accent-fg:#0e1118;--ok:#4cc98a;--warn:#f0ad4a;--bad:#f27474;
+  --t1:#8196ff;--t2:#3fd0bb;--t3:#f08a55;--t4:#c28af2;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-block:10px}
+.logo{font:800 21px/1 var(--display);letter-spacing:-.3px;display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:0;padding:0}
+.logo i{font-style:normal;display:grid;place-items:center;width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);font-size:16px}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.nav-btn{background:none;border:0;border-radius:7px;padding:7px 11px;cursor:pointer;color:var(--muted);font-weight:500}
+.nav-btn:hover{color:var(--fg);background:var(--surface-2)}
+.nav-btn[aria-current="page"]{color:var(--fg);background:var(--surface-2)}
+main{padding-block:22px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;letter-spacing:-.2px;margin:0}
+h1{font-size:clamp(24px,4vw,34px);font-weight:800;line-height:1.1}
+h2{font-size:20px;font-weight:600}
+h3{font-size:16px;font-weight:600}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack-lg{display:flex;flex-direction:column;gap:20px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.muted{color:var(--muted)}.small{font-size:13px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{background:var(--accent-2)}
+.btn.ghost{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.ok{background:var(--ok);color:#fff}.btn.bad{background:var(--bad);color:#fff}
+.btn.sm{padding:5px 11px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+label.f{display:block;font-size:13px;color:var(--muted);margin:0 0 4px;font-weight:500}
+input,select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--accent)}
+textarea{min-height:84px;resize:vertical}
+.check{display:flex;gap:9px;align-items:flex-start;color:var(--fg);font-size:14px}
+.check input{margin-top:4px}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;border:1px solid currentColor;line-height:1.5;white-space:nowrap}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--accent)}.pill.plain{color:var(--muted)}
+.hero{display:grid;gap:16px;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:end;padding-block:8px 18px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.hero p{max-width:56ch}
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.trust div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.trust b{display:block;font:700 18px/1.2 var(--mono)}
+@media(max-width:760px){.hero{grid-template-columns:1fr}}
+.search{display:flex;gap:8px;flex-wrap:wrap}
+.search input{flex:1 1 220px}
+.search select{flex:0 0 auto;width:auto}
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin:14px 0 18px}
+.cat{white-space:nowrap;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--muted);font-weight:500;font-size:14px}
+.cat[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tile{display:grid;place-items:center;border-radius:9px;font:700 15px/1 var(--mono);letter-spacing:.04em;aspect-ratio:16/7;max-width:100%}
+.tile.t1{color:var(--t1);background:color-mix(in srgb,var(--t1) 13%,var(--surface))}
+.tile.t2{color:var(--t2);background:color-mix(in srgb,var(--t2) 13%,var(--surface))}
+.tile.t3{color:var(--t3);background:color-mix(in srgb,var(--t3) 13%,var(--surface))}
+.tile.t4{color:var(--t4);background:color-mix(in srgb,var(--t4) 13%,var(--surface))}
+.item{display:flex;flex-direction:column;gap:9px;cursor:pointer;transition:border-color .15s}
+.item:hover{border-color:var(--accent)}
+.item .title{font-weight:600;line-height:1.35}
+.price{font:700 19px/1 var(--mono);font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:9px 12px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font:700 22px/1.25 var(--mono);font-variant-numeric:tabular-nums}
+.note{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 9%,var(--surface));padding:10px 14px;border-radius:6px;font-size:14px}
+.note.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 9%,var(--surface))}
+.note.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
+.note.info{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.secret{font:500 13px/1.5 var(--mono);background:var(--surface-2);border:1px dashed var(--line);padding:9px 11px;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+.step{display:grid;grid-template-columns:32px minmax(0,1fr);gap:14px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.step .num{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);font:700 14px var(--mono)}
+.step.done .num{background:var(--ok);color:#fff}
+.step.locked{opacity:.55}
+ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.qr{background:#fff;padding:8px;border-radius:8px;width:180px;max-width:100%}
+.err{color:var(--bad);font-size:14px}
+#toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:50;max-width:calc(100vw - 32px)}
+.toast{background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:9px;box-shadow:0 8px 24px rgb(0 0 0 / .25);max-width:380px;font-size:14px}
+.modal-bg{position:fixed;inset:0;background:rgb(10 12 18 / .6);display:grid;place-items:center;z-index:40;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:520px;max-height:90vh;overflow:auto}
+.skeleton{color:var(--muted);padding:40px 0;text-align:center}
+.banner{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border-bottom:1px solid var(--line);font-size:13px}
+.banner .wrap{padding-block:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="wrap bar">
+    <button class="logo" onclick="go('market')" aria-label="Lenzo Market home"><i>L</i>Lenzo Market</button>
+    <nav id="nav"></nav>
+  </div>
+</header>
+<div id="banner"></div>
+<main class="wrap" id="app"><div class="skeleton">Loading Lenzo Market…</div></main>
+<div id="toasts" aria-live="polite"></div>
+<div id="modal"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===================== Config ===================== */
+const SB_URL='https://whsmvalnzsmxgngvmzcv.supabase.co';
+const SB_KEY='sb_publishable_F7HOaYak3T3mtBSiS8dhxA_IR447CRU';
+const FEE=0.08;
+
+const CATS=[
+  {id:'ebooks',name:'Ebooks',code:'EB',hold:24,rules:['You must be the author or hold written resale rights.','PLR and MRR titles need the license document.','No pirated, scanned or leaked books.'],
+    proof:[{k:'rights',label:'Rights type',type:'select',opts:['I am the author','Resale rights license (PLR/MRR)','Publisher agreement']},{k:'isbn',label:'ISBN or license ID',type:'text'}]},
+  {id:'game-items',name:'Game Items',code:'GI',hold:24,rules:['Items must come from normal gameplay or official purchases.','No duped, hacked or botted items.','If the game bans trading, say so in the description.'],
+    proof:[{k:'game',label:'Game name',type:'text'},{k:'source',label:'How you got the items',type:'select',opts:['Gameplay drops','In-game trade','Official store purchase']},{k:'screenshot',label:'Inventory screenshot',type:'file'}]},
+  {id:'game-currency',name:'Game Currency',code:'GC',hold:24,rules:['Currency must be farmed by hand or bought officially.','No bot farming, exploits or chargeback-funded currency.'],
+    proof:[{k:'game',label:'Game and server or region',type:'text'},{k:'source',label:'Source',type:'select',opts:['Farmed by hand','Official purchase','Trading']},{k:'screenshot',label:'Balance screenshot',type:'file'}]},
+  {id:'accounts',name:'Game Accounts',code:'GA',hold:72,rules:['You must be the original owner, with the first email on the account.','You hand over full access, original email included.','No stolen, cracked, checked or pulled accounts. Instant ban.'],
+    proof:[{k:'game',label:'Game or platform',type:'text'},{k:'created',label:'Account creation date',type:'date'},{k:'ogemail',label:'Original email included?',type:'select',opts:['Yes, full email access','No']},{k:'screenshot',label:'Account settings screenshot, with your Lenzo username written on paper in view',type:'file'}]},
+  {id:'discord-accounts',name:'Discord Accounts',code:'DA',hold:72,rules:['Original owner only, with the original email transferred.','No token-grabbed, phished or mass-created accounts.','Accounts must be at least 30 days old and in good standing.'],
+    proof:[{k:'created',label:'Account creation date',type:'date'},{k:'ogemail',label:'Original email included?',type:'select',opts:['Yes, full email access','No']},{k:'screenshot',label:'Settings screenshot with your Lenzo username in view',type:'file'}]},
+  {id:'discord-members',name:'Discord Growth',code:'DG',hold:72,rules:['Real members only, from opt-in promotion: ads, partner servers, listing sites.','No bots, self-bots, token joiners or OAuth2 member boosting. Instant ban.','You must name your promotion channel and show past results.'],
+    proof:[{k:'method',label:'Promotion channel',type:'select',opts:['Partner server ads','Server listing sites','Social media promotion','Influencer shoutout']},{k:'portfolio',label:'Link to past work or a case study',type:'text'},{k:'screenshot',label:'Screenshot of past campaign results',type:'file'}]},
+  {id:'streaming',name:'Netflix & Streaming',code:'NS',hold:72,rules:['Official gift cards and prepaid codes only, each with a purchase receipt.','No shared logins, profiles, lifetime or cracked accounts.','Price can\'t go more than 15% under face value.'],
+    proof:[{k:'service',label:'Service',type:'select',opts:['Netflix','Spotify','Disney+','YouTube Premium','Crunchyroll','Other']},{k:'face',label:'Face value (USD)',type:'number'},{k:'store',label:'Store you bought it from',type:'text'},{k:'screenshot',label:'Purchase receipt',type:'file'}]},
+  {id:'software',name:'Software & Keys',code:'SK',hold:24,rules:['Keys must come from official retailers or the developer.','No grey-market, volume license or chargeback keys.'],
+    proof:[{k:'store',label:'Store you bought it from',type:'text'},{k:'screenshot',label:'Purchase receipt',type:'file'}]},
+  {id:'gift-cards',name:'Gift Cards',code:'GF',hold:72,rules:['Unused cards only, with a receipt.','No cards bought with someone else\'s payment method.'],
+    proof:[{k:'brand',label:'Brand',type:'text'},{k:'face',label:'Face value (USD)',type:'number'},{k:'screenshot',label:'Purchase receipt',type:'file'}]},
+  {id:'assets',name:'Design & Game Assets',code:'DS',hold:24,rules:['You made it, or you hold resale rights.','No ripped game models, textures or sounds.'],
+    proof:[{k:'rights',label:'Rights',type:'select',opts:['I made it','Licensed for resale']},{k:'portfolio',label:'Portfolio link',type:'text'}]},
+  {id:'courses',name:'Courses & Guides',code:'CG',hold:24,rules:['Original content only. No resold or leaked courses.'],
+    proof:[{k:'portfolio',label:'Sample or preview link',type:'text'}]},
+];
+const CAT=Object.fromEntries(CATS.map((c,i)=>[c.id,{...c,tone:'t'+(i%4+1)}]));
+const HIGH_RISK=['accounts','discord-accounts','discord-members','streaming','gift-cards'];
+const QUIZ=[
+  {q:'A buyer asks you to finish the deal on Telegram to skip fees. What do you do?',a:['Agree, it saves money','Decline and keep the deal on Lenzo','Ask for a deposit first']},
+  {q:'You bought a Netflix login from another site. Can you list it?',a:['Yes, under Netflix & Streaming','Yes, if the price is low','No. Shared or resold logins are banned']},
+  {q:'Which Discord Growth service is allowed?',a:['Token-joined members','Ads in real partner servers','Self-bot invites']},
+  {q:'You sell a game account. What must you hand over?',a:['Only the username and password','Full access, including the original email','A screenshot']},
+  {q:'A buyer opens a dispute. What happens to the money?',a:['It stays frozen until a moderator decides','It goes to you right away','It is deleted']},
+];
+// Sample listings, shown only when the page can't reach the database (for example inside a preview frame).
+const SAMPLE=[
+  ['ebooks','Pixel Art for Beginners (PDF, 120 pages)',9.99,'Written by the seller. A step by step guide to pixel art with 40 exercises.'],
+  ['game-currency','10,000 Gold, EU server, hand farmed',14.50,'Hand farmed and delivered by in-game mail within 2 hours.'],
+  ['streaming','Netflix gift card $30, official code with receipt',29.00,'Bought from an official retailer. Unused. Receipt checked by a Lenzo moderator.'],
+  ['assets','Low-poly Forest Pack, 300 models',18.00,'Made by the seller. Commercial license included.'],
+  ['discord-members','Server promotion: 3 partner-server ad posts',35.00,'Your server gets posted in 3 partner servers with 40k+ real users in total. No bots.'],
+  ['courses','Unity Multiplayer Crash Course, 4h video',25.00,'Four hours of original video lessons on netcode and lobbies.'],
+  ['game-items','Legendary Sword Skin Bundle',22.00,'Official store bundle, tradable. Delivered by trade.'],
+  ['software','Indie Game Dev Toolkit license key',12.00,'Bought from the developer\'s official store. Receipt on file.'],
+].map(([cat,title,price,descr],i)=>({id:'sample-'+i,cat,title,price,descr,stock:10,seller:{name:'PixelForge',seller_tier:2},created_at:new Date(Date.now()-i*864e5).toISOString()}));
+
+/* ===================== State ===================== */
+let sb=null, live=false, session=null, profile=null, aal=null;
+let view='market', S={cat:'all',q:'',sort:'new',tab:null,item:null,newCat:'ebooks'};
+let vf={docs:{}}; // seller application draft, kept in memory until submitted
+let renderId=0;
+
+const $=id=>document.getElementById(id);
+const val=id=>($(id)?.value||'').trim();
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'$'+(+n).toFixed(2);
+const when=t=>new Date(t).toLocaleString([], {dateStyle:'medium',timeStyle:'short'});
+const uid=()=>session?.user?.id;
+function toast(m,ms=4500){const t=document.createElement('div');t.className='toast';t.innerHTML=m;$('toasts').appendChild(t);setTimeout(()=>t.remove(),ms)}
+function modal(h){$('modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal stack" role="dialog" aria-modal="true">${h}</div></div>`}
+function closeModal(){$('modal').innerHTML=''}
+function fail(e){toast(esc(e?.message||String(e)),6500)}
+async function rpc(fn,args){const {data,error}=await sb.rpc(fn,args);if(error)throw error;return data}
+async function q(p){const {data,error}=await p;if(error)throw error;return data}
+const tile=(cat,big)=>{const c=CAT[cat];return `<div class="tile ${c.tone}" ${big?'style="font-size:28px"':''}>${c.code}</div>`};
+const tierPill=s=>s?.seller_tier===2?'<span class="pill ok">Trusted seller</span>':'<span class="pill info">Verified seller</span>';
+
+/* ===================== Boot ===================== */
+async function boot(){
+  try{
+    if(!window.supabase)throw new Error('no client');
+    sb=supabase.createClient(SB_URL,SB_KEY);
+    const r=await Promise.race([sb.from('categories').select('id').limit(1),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),7000))]);
+    if(r.error)throw r.error;
+    live=true;
+  }catch(e){live=false}
+  if(live){
+    const {data}=await sb.auth.getSession();session=data.session;
+    sb.auth.onAuthStateChange((ev,s)=>{session=s;setTimeout(()=>loadMe().then(render),0)});
+    await loadMe();
+    sb.rpc('release_due').then(()=>{});
+  }else{
+    $('banner').innerHTML=`<div class="banner"><div class="wrap">Preview mode: this frame can't reach the Lenzo database, so you see sample listings. Accounts, buying and selling work on the hosted page.</div></div>`;
+  }
+  render();
+}
+async function loadMe(){
+  if(!session){profile=null;aal=null;return}
+  const {data}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();profile=data;
+  const a=await sb.auth.mfa.getAuthenticatorAssuranceLevel();aal=a.data;
+}
+
+/* ===================== Router ===================== */
+function go(v,extra){view=v;S.tab=null;Object.assign(S,extra||{});render();window.scrollTo(0,0)}
+async function render(){
+  const id=++renderId;
+  const links=[['market','Marketplace'],['rules','Seller rules']];
+  if(profile){links.push(['buyer','Buyer panel'],['seller','Seller panel']);if(profile.is_admin)links.push(['admin','Moderation'])}
+  $('nav').innerHTML=links.map(([k,n])=>`<button class="nav-btn" ${view===k?'aria-current="page"':''} onclick="go('${k}')">${n}</button>`).join('')+
+    (profile?`<button class="nav-btn" onclick="signOut()">Sign out</button>`:`<button class="btn sm" onclick="authModal('in')">Sign in with Lenzo</button>`);
+  let html;
+  try{
+    if(['buyer','seller','admin'].includes(view)&&!profile)html=needLogin();
+    else html=await ({market:vMarket,item:vItem,rules:vRules,buyer:vBuyer,seller:vSeller,admin:vAdmin}[view]||vMarket)();
+  }catch(e){html=`<div class="note bad">${esc(e.message||e)}</div>`}
+  if(id===renderId)$('app').innerHTML=html;
+}
+function needLogin(){
+  return `<div class="panel stack" style="max-width:460px;margin:40px auto;text-align:center"><h2>Sign in with your Lenzo account</h2>
+  <p class="muted">You need a Lenzo account to buy or sell.</p>
+  ${live?`<div class="row" style="justify-content:center"><button class="btn" onclick="authModal('in')">Sign in</button><button class="btn ghost" onclick="authModal('up')">Create account</button></div>`:
+  `<p class="small muted">Sign-in is off in preview mode. Open the hosted page to use your account.</p>`}</div>`;
+}
+
+/* ===================== Auth ===================== */
+function authModal(mode){
+  if(!live){toast('Sign-in works on the hosted page, not in this preview.');return}
+  const up=mode==='up';
+  modal(`<h2>${up?'Create your Lenzo account':'Sign in with Lenzo'}</h2>
+  ${up?`<div><label class="f" for="a-name">Display name</label><input id="a-name" maxlength="24" autocomplete="nickname"></div>`:''}
+  <div><label class="f" for="a-email">Email</label><input id="a-email" type="email" autocomplete="email"></div>
+  <div><label class="f" for="a-pass">Password${up?' (10+ characters, with a letter and a number)':''}</label><input id="a-pass" type="password" autocomplete="${up?'new-password':'current-password'}"></div>
+  ${up?`<label class="check"><input type="checkbox" id="a-age"> I am 18 or older and accept the Lenzo terms.</label>`:''}
+  <div id="a-err" class="err" hidden></div>
+  <div class="row"><button class="btn" id="a-go" onclick="${up?'signUp()':'signIn()'}">${up?'Create account':'Sign in'}</button><span class="spacer"></span>
+  <a href="#" onclick="authModal('${up?'in':'up'}');return false">${up?'I already have an account':'Create a Lenzo account'}</a></div>`);
+}
+function authErr(m){const e=$('a-err');e.textContent=m;e.hidden=false;$('a-go')&&($('a-go').disabled=false)}
+async function signUp(){
+  const name=val('a-name'),email=val('a-email').toLowerCase(),pass=$('a-pass').value;
+  if(!/^[A-Za-z0-9_.-]{3,24}$/.test(name))return authErr('Display name: 3-24 letters, numbers, dots, dashes or underscores.');
+  if(pass.length<10||!/\d/.test(pass)||!/[a-z]/i.test(pass))return authErr('Password needs 10+ characters with a letter and a number.');
+  if(!$('a-age').checked)return authErr('You must be 18+ and accept the terms.');
+  const taken=await sb.from('profiles').select('id').ilike('name',name).maybeSingle();
+  if(taken.data)return authErr('That display name is taken.');
+  $('a-go').disabled=true;
+  const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{name},emailRedirectTo:location.href.split('#')[0]}});
+  if(error)return authErr(error.message);
+  if(!data.session)modal(`<h2>Check your email</h2><p>We sent a confirmation link to <b>${esc(email)}</b>. Open it to activate your Lenzo account, then sign in.</p><div class="row"><button class="btn" onclick="authModal('in')">Go to sign in</button></div>`);
+  else{closeModal();toast('Welcome to Lenzo, '+esc(name)+'.')}
+}
+async function signIn(){
+  const email=val('a-email').toLowerCase(),pass=$('a-pass').value;
+  $('a-go').disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error)return authErr(error.message==='Email not confirmed'?'Confirm your email first. Check your inbox for the link.':error.message);
+  await loadMe();
+  if(profile?.banned){await sb.auth.signOut();return authErr('This Lenzo account is banned.')}
+  if(aal?.nextLevel==='aal2'&&aal.currentLevel!=='aal2')return mfaModal();
+  closeModal();toast('Signed in as '+esc(profile?.name));render();
+}
+function mfaModal(){
+  modal(`<h2>Two-factor code</h2><p class="muted">Open your authenticator app and enter the 6-digit code for Lenzo.</p>
+  <input id="m-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456">
+  <div id="a-err" class="err" hidden></div><div class="row"><button class="btn" id="a-go" onclick="mfaVerify()">Verify</button></div>`);
+}
+async function mfaVerify(){
+  const f=(await sb.auth.mfa.listFactors()).data?.totp?.[0];
+  if(!f)return authErr('No authenticator is set up on this account.');
+  const {error}=await sb.auth.mfa.challengeAndVerify({factorId:f.id,code:val('m-code')});
+  if(error)return authErr('Wrong code. Try the newest code in your app.');
+  await loadMe();closeModal();toast('Signed in with two-factor authentication.');render();
+}
+async function signOut(){await sb.auth.signOut();profile=null;session=null;vf={docs:{}};go('market')}
+
+/* ===================== Marketplace ===================== */
+async function fetchListings(){
+  if(!live){let r=SAMPLE;if(S.cat!=='all')r=r.filter(l=>l.cat===S.cat);if(S.q)r=r.filter(l=>(l.title+' '+l.descr).toLowerCase().includes(S.q.toLowerCase()));return sortL(r)}
+  let p=sb.from('listings').select('id,cat,title,descr,price,stock,created_at,seller:profiles!listings_seller_id_fkey(name,seller_tier,banned)').eq('status','live').gt('stock',0).limit(60);
+  if(S.cat!=='all')p=p.eq('cat',S.cat);
+  if(S.q)p=p.ilike('title','%'+S.q.replace(/[%_,()]/g,' ')+'%');
+  p=S.sort==='low'?p.order('price'):S.sort==='high'?p.order('price',{ascending:false}):p.order('created_at',{ascending:false});
+  return (await q(p)).filter(l=>!l.seller?.banned);
+}
+function sortL(r){return [...r].sort(S.sort==='low'?(a,b)=>a.price-b.price:S.sort==='high'?(a,b)=>b.price-a.price:(a,b)=>b.created_at.localeCompare(a.created_at))}
+async function vMarket(){
+  const items=await fetchListings();
+  return `<section class="hero"><div class="stack"><span class="label">Digital goods marketplace</span><h1>Buy from sellers who passed an ID check</h1>
+    <p class="muted">Every seller on Lenzo shows a government ID, turns on two-factor sign-in and gets approved by a moderator. Your money sits in escrow until you confirm the item works.</p></div>
+    <div class="trust"><div><b>6</b><span class="small muted">seller checks</span></div><div><b>72h</b><span class="small muted">escrow on accounts</span></div><div><b>3</b><span class="small muted">strikes to a ban</span></div></div></section>
+  <div class="search"><input id="q" placeholder="Search ebooks, gold, gift cards…" value="${esc(S.q)}" onkeydown="if(event.key==='Enter'){S.q=this.value.trim();render()}" aria-label="Search listings">
+    <button class="btn" onclick="S.q=val('q');render()">Search</button>
+    <select id="sort" onchange="S.sort=this.value;render()" aria-label="Sort">
+      <option value="new" ${S.sort==='new'?'selected':''}>Newest</option><option value="low" ${S.sort==='low'?'selected':''}>Price: low to high</option><option value="high" ${S.sort==='high'?'selected':''}>Price: high to low</option></select></div>
+  <div class="cats" role="group" aria-label="Categories"><button class="cat" aria-pressed="${S.cat==='all'}" onclick="S.cat='all';render()">All</button>
+    ${CATS.map(c=>`<button class="cat" aria-pressed="${S.cat===c.id}" onclick="S.cat='${c.id}';render()">${c.name}</button>`).join('')}</div>
+  ${items.length?`<div class="grid g3">${items.map(card).join('')}</div>`:
+    `<div class="panel stack" style="text-align:center;padding:36px"><h3>No listings here yet</h3><p class="muted">Verified sellers' items show up here once a moderator approves them.</p><div><button class="btn ghost" onclick="go('seller')">Start selling</button></div></div>`}`;
+}
+function card(l){
+  return `<article class="panel item" tabindex="0" onclick="go('item',{item:'${l.id}'})" onkeydown="if(event.key==='Enter')go('item',{item:'${l.id}'})">
+  ${tile(l.cat)}<span class="label">${CAT[l.cat].name}</span><div class="title">${esc(l.title)}</div>
+  <div class="small muted">by ${esc(l.seller?.name)}</div>
+  <div class="row"><span class="price">${money(l.price)}</span><span class="spacer"></span>${tierPill(l.seller)}</div></article>`;
+}
+async function vItem(){
+  let l,reviews=[];
+  if(!live)l=SAMPLE.find(x=>x.id===S.item);
+  else{
+    l=await q(sb.from('listings').select('*,seller:profiles!listings_seller_id_fkey(id,name,seller_tier,created_at)').eq('id',S.item).maybeSingle());
+    if(l)reviews=await q(sb.from('reviews').select('stars,body,created_at,buyer:profiles!reviews_buyer_id_fkey(name)').eq('seller_id',l.seller_id).order('created_at',{ascending:false}).limit(20));
+  }
+  if(!l)return `<div class="panel">This listing is gone or not approved yet.</div>`;
+  const c=CAT[l.cat],mine=profile&&profile.id===l.seller_id;
+  const avg=reviews.length?(reviews.reduce((a,r)=>a+r.stars,0)/reviews.length).toFixed(1):null;
+  return `<div class="stack-lg"><div><button class="btn ghost sm" onclick="go('market')">Back to market</button></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))">
+  <div class="panel stack">${tile(l.cat,true)}<span class="label">${c.name}</span><h1>${esc(l.title)}</h1>
+    <p style="white-space:pre-wrap;max-width:65ch">${esc(l.descr)}</p>
+    <h3>Seller reviews ${avg?`<span class="muted small">${avg} of 5 from ${reviews.length}</span>`:''}</h3>
+    ${reviews.length?reviews.map(r=>`<div class="small"><b>${r.stars}/5</b> <span class="muted">${esc(r.buyer?.name)} · ${when(r.created_at)}</span><br>${esc(r.body)}</div>`).join(''):'<p class="small muted">No reviews yet.</p>'}
+  </div>
+  <div class="panel stack"><div class="price" style="font-size:30px">${money(l.price)}</div><p class="muted small">${l.stock} in stock</p>
+    <div class="row"><span>Seller <b>${esc(l.seller?.name)}</b></span>${tierPill(l.seller)}</div>
+    <div class="note ok">Escrow: your money is held for <b>${c.hold} hours</b> after purchase. Open a dispute in that window if anything is wrong.</div>
+    ${mine?'<p class="muted">This is your listing.</p>':`<div><label class="f" for="qty">Quantity</label><input id="qty" type="number" min="1" max="${l.stock}" value="1"></div>
+    <button class="btn" onclick="buy('${l.id}',${l.price},${l.stock})">Buy now</button>`}
+    <div><button class="btn ghost sm" onclick="reportModal('${l.id}')">Report this listing</button></div>
+    <h3>${c.name} rules</h3><ul class="rules small muted">${c.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+  </div></div></div>`;
+}
+function buy(id,price,stock){
+  if(!live){toast('Buying works on the hosted page, not in this preview.');return}
+  if(!profile)return authModal('in');
+  const qty=Math.max(1,Math.min(stock,parseInt(val('qty'))||1)),total=+(price*qty).toFixed(2);
+  modal(`<h2>Confirm purchase</h2><p>Quantity ${qty}</p><p class="price" style="font-size:26px">${money(total)}</p>
+  <p class="small muted">The money leaves your wallet and waits in escrow. The seller gets paid when you confirm or when the hold ends.</p>
+  <div class="row"><button class="btn" id="b-go" onclick="confirmBuy('${id}',${qty})">Pay ${money(total)}</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+}
+async function confirmBuy(id,qty){
+  $('b-go').disabled=true;
+  try{await rpc('buy',{p_listing:id,p_qty:qty});closeModal();toast('Order placed. Your delivery is in the buyer panel.');go('buyer')}
+  catch(e){closeModal();fail(e)}
+}
+function reportModal(id){
+  if(!live){toast('Reports work on the hosted page.');return}
+  if(!profile)return authModal('in');
+  modal(`<h2>Report listing</h2><div><label class="f" for="r-reason">Reason</label><select id="r-reason"><option>Stolen or cracked goods</option><option>Bots or fake members</option><option>Shared or resold login</option><option>Pirated content</option><option>Scam or misleading</option><option>Other</option></select></div>
+  <div><label class="f" for="r-text">Details</label><textarea id="r-text"></textarea></div>
+  <div class="row"><button class="btn bad" onclick="sendReport('${id}')">Send report</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+}
+async function sendReport(id){try{await q(sb.from('reports').insert({listing_id:id,reason:val('r-reason'),body:val('r-text')}));closeModal();toast('Report sent to Lenzo moderators.')}catch(e){fail(e)}}
+
+/* ===================== Buyer panel ===================== */
+const statusPill=o=>({escrow:'<span class="pill warn">In escrow</span>',completed:'<span class="pill ok">Completed</span>',disputed:'<span class="pill bad">Disputed</span>',refunded:'<span class="pill info">Refunded</span>'})[o.status];
+async function vBuyer(){
+  const tab=S.tab||'orders';
+  const [w,orders,reviewed]=await Promise.all([
+    q(sb.from('wallets').select('*').eq('user_id',uid()).single()),
+    q(sb.from('orders').select('*,seller:profiles!orders_seller_id_fkey(name)').eq('buyer_id',uid()).order('created_at',{ascending:false})),
+    q(sb.from('reviews').select('order_id').eq('buyer_id',uid()))]);
+  const rv=new Set(reviewed.map(r=>r.order_id));
+  const spent=orders.filter(o=>o.status!=='refunded').reduce((a,o)=>a+ +o.price,0);
+  return `<div class="stack-lg"><div class="stack"><h1>Buyer panel</h1><p class="muted">Signed in as ${esc(profile.name)} · ${esc(session.user.email)}</p></div>
+  <div class="grid g4"><div class="stat"><span class="label">Wallet</span><b>${money(w.balance)}</b></div><div class="stat"><span class="label">Orders</span><b>${orders.length}</b></div>
+  <div class="stat"><span class="label">In escrow</span><b>${orders.filter(o=>o.status==='escrow').length}</b></div><div class="stat"><span class="label">Total spent</span><b>${money(spent)}</b></div></div>
+  <div><div class="tabs" role="tablist">${[['orders','Orders'],['wallet','Wallet']].map(([k,n])=>`<button class="tab" role="tab" aria-selected="${tab===k}" onclick="S.tab='${k}';render()">${n}</button>`).join('')}</div>
+  ${tab==='wallet'?`<div class="panel stack" style="max-width:480px"><h2>Add test funds</h2><p class="small muted">No real money moves yet. Connect a payment provider such as Stripe before launch. Test wallets are capped at $500.</p>
+    <div class="row">${[10,25,50,100].map(a=>`<button class="btn ghost" onclick="addFunds(${a})">Add ${money(a)}</button>`).join('')}</div></div>`:
+  orders.length?`<div class="panel tablewrap"><table><thead><tr><th>Item</th><th>Price</th><th>Status</th><th>Delivery</th><th>Actions</th></tr></thead><tbody>
+  ${orders.map(o=>`<tr><td><b>${esc(o.title)}</b> ×${o.qty}<div class="small muted">${when(o.created_at)} · ${esc(o.seller?.name)}</div></td><td class="num">${money(o.price)}</td><td>${statusPill(o)}</td>
+  <td style="min-width:200px">${o.status==='refunded'?'<span class="small muted">Refunded to wallet</span>':`<div class="secret">${esc(o.secret)}</div>`}</td>
+  <td>${o.status==='escrow'?`<div class="row"><button class="btn ok sm" onclick="confirmOrder('${o.id}')">It works, pay seller</button><button class="btn bad sm" onclick="disputeModal('${o.id}')">Dispute</button></div><div class="small muted">Auto-pays ${when(o.release_at)}</div>`:
+    o.status==='completed'&&!rv.has(o.id)?`<button class="btn ghost sm" onclick="reviewModal('${o.id}')">Leave review</button>`:o.status==='disputed'?'<span class="small muted">A moderator is reviewing</span>':''}</td></tr>`).join('')}</tbody></table></div>`:
+  `<div class="panel stack" style="text-align:center;padding:32px"><h3>No orders yet</h3><p class="muted">Add test funds in the Wallet tab, then buy something from the market.</p><div><button class="btn" onclick="go('market')">Browse the market</button></div></div>`}</div></div>`;
+}
+async function addFunds(a){try{await rpc('add_demo_funds',{p_amount:a});toast('Added '+money(a)+' in test funds.');render()}catch(e){fail(e)}}
+async function confirmOrder(id){try{await rpc('confirm_order',{p_id:id});toast('Payment released to the seller.');render()}catch(e){fail(e)}}
+function disputeModal(id){modal(`<h2>Open a dispute</h2><p class="small muted">A moderator checks the order and decides. The money stays frozen until then.</p>
+  <div><label class="f" for="d-reason">What went wrong?</label><select id="d-reason"><option>Item not delivered</option><option>Login doesn't work or seller took it back</option><option>Not as described</option><option>Code already used</option></select></div>
+  <div><label class="f" for="d-text">Details and proof (15+ characters)</label><textarea id="d-text"></textarea></div>
+  <div class="row"><button class="btn bad" onclick="openDispute('${id}')">Open dispute</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`)}
+async function openDispute(id){try{await rpc('open_dispute',{p_id:id,p_reason:val('d-reason'),p_text:val('d-text')});closeModal();toast('Dispute opened. The money is frozen.');render()}catch(e){fail(e)}}
+function reviewModal(id){modal(`<h2>Leave a review</h2><div><label class="f" for="rv-s">Rating</label><select id="rv-s">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} of 5</option>`).join('')}</select></div>
+  <div><label class="f" for="rv-t">Review</label><textarea id="rv-t" maxlength="1000"></textarea></div><div class="row"><button class="btn" onclick="sendReview('${id}')">Post review</button></div>`)}
+async function sendReview(id){try{await rpc('leave_review',{p_order:id,p_stars:+val('rv-s'),p_body:val('rv-t')});closeModal();toast('Review posted.');render()}catch(e){fail(e)}}
+
+/* ===================== Seller panel ===================== */
+async function vSeller(){
+  if(profile.seller_status!=='approved')return vVerify();
+  const tab=S.tab||'listings';
+  const [w,app,mine,orders]=await Promise.all([
+    q(sb.from('wallets').select('*').eq('user_id',uid()).single()),
+    q(sb.from('seller_apps').select('completed,strikes,legal_name').eq('user_id',uid()).single()),
+    q(sb.from('listings').select('*').eq('seller_id',uid()).order('created_at',{ascending:false})),
+    q(sb.from('orders').select('*,buyer:profiles!orders_buyer_id_fkey(name)').eq('seller_id',uid()).order('created_at',{ascending:false}))]);
+  const t1=profile.seller_tier===1;
+  return `<div class="stack-lg"><div class="stack"><h1>Seller panel</h1>
+  <div class="row"><span class="pill ok">Verified seller</span>${t1?'<span class="pill warn">Tier 1 · Probation</span>':'<span class="pill ok">Tier 2 · Trusted</span>'}${app.strikes?`<span class="pill bad">${app.strikes} of 3 strikes</span>`:''}
+  ${aal?.currentLevel!=='aal2'?'<span class="pill bad">Sign in with 2FA to list or withdraw</span>':''}</div></div>
+  ${t1?`<div class="note">Probation limits: 3 active listings, $100 max per item, and a moderator checks every listing. Finish 10 orders with zero refunds to reach Tier 2. You have ${app.completed}.</div>`:''}
+  <div class="grid g4"><div class="stat"><span class="label">Ready to withdraw</span><b>${money(w.seller_available)}</b></div><div class="stat"><span class="label">In escrow</span><b>${money(w.seller_pending)}</b></div>
+  <div class="stat"><span class="label">Live listings</span><b>${mine.filter(l=>l.status==='live').length}</b></div><div class="stat"><span class="label">Completed orders</span><b>${app.completed}</b></div></div>
+  <div><div class="tabs" role="tablist">${[['listings','My listings'],['new','New listing'],['orders','Sales'],['payout','Payouts']].map(([k,n])=>`<button class="tab" role="tab" aria-selected="${tab===k}" onclick="S.tab='${k}';render()">${n}</button>`).join('')}</div>
+  ${tab==='new'?newListingForm():tab==='orders'?salesTable(orders):tab==='payout'?payoutView(w,app):listingsTable(mine)}</div></div>`;
+}
+function listingsTable(mine){
+  if(!mine.length)return `<div class="panel stack" style="text-align:center;padding:32px"><h3>No listings yet</h3><p class="muted">Create your first listing. A moderator checks it before it goes live.</p><div><button class="btn" onclick="S.tab='new';render()">New listing</button></div></div>`;
+  const pill={live:'<span class="pill ok">Live</span>',pending:'<span class="pill warn">In review</span>',rejected:'<span class="pill bad">Rejected</span>',paused:'<span class="pill plain">Paused</span>'};
+  return `<div class="panel tablewrap"><table><thead><tr><th>Listing</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+  ${mine.map(l=>`<tr><td><b>${esc(l.title)}</b><div class="small muted">${CAT[l.cat].name}</div>${l.reject_reason?`<div class="small err">${esc(l.reject_reason)}</div>`:''}${l.flags?.length?`<div class="small" style="color:var(--warn)">Flags: ${esc(l.flags.join('; '))}</div>`:''}</td>
+  <td class="num">${money(l.price)}</td><td class="num">${l.stock}</td><td>${pill[l.status]}</td>
+  <td><div class="row">${l.status==='live'?`<button class="btn ghost sm" onclick="setListing('${l.id}','paused')">Pause</button>`:l.status==='paused'?`<button class="btn ghost sm" onclick="setListing('${l.id}','live')">Resume</button>`:''}
+  <button class="btn ghost sm" onclick="delListing('${l.id}')">Delete</button></div></td></tr>`).join('')}</tbody></table></div>`;
+}
+async function setListing(id,st){try{await rpc('set_listing_status',{p_id:id,p_status:st});render()}catch(e){fail(e)}}
+async function delListing(id){
+  modal(`<h2>Delete this listing?</h2><p class="muted">Buyers can't see it after this. Past orders stay in your sales.</p><div class="row"><button class="btn bad" onclick="reallyDelete('${id}')">Delete listing</button><button class="btn ghost" onclick="closeModal()">Keep it</button></div>`);
+}
+async function reallyDelete(id){try{await q(sb.from('listings').delete().eq('id',id));closeModal();toast('Listing deleted.');render()}catch(e){fail(e)}}
+function newListingForm(){
+  const c=CAT[S.newCat];
+  return `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))"><div class="panel stack"><h2>New listing</h2>
+  <div><label class="f" for="n-cat">Category</label><select id="n-cat" onchange="S.newCat=this.value;render()">${CATS.map(x=>`<option value="${x.id}" ${x.id===c.id?'selected':''}>${x.name}</option>`).join('')}</select></div>
+  <div><label class="f" for="n-title">Title (10-80 characters)</label><input id="n-title" maxlength="80"></div>
+  <div><label class="f" for="n-desc">Description (40+ characters, say exactly what the buyer gets)</label><textarea id="n-desc"></textarea></div>
+  <div class="row"><div style="flex:1"><label class="f" for="n-price">Price (USD)</label><input id="n-price" type="number" min="1" step="0.01"></div><div style="flex:1"><label class="f" for="n-stock">Stock</label><input id="n-stock" type="number" min="1" value="1"></div></div>
+  <div><label class="f" for="n-secret">Delivery content (buyers see it only after paying)</label><textarea id="n-secret" placeholder="Download link, code, or handover steps"></textarea></div>
+  <h3>Proof for ${c.name}</h3>
+  ${c.proof.map(p=>`<div><label class="f" for="p-${p.k}">${esc(p.label)}</label>${p.type==='select'?`<select id="p-${p.k}"><option value="">Choose…</option>${p.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select>`:p.type==='file'?`<input id="p-${p.k}" type="file" accept="image/png,image/jpeg,image/webp,application/pdf">`:`<input id="p-${p.k}" type="${p.type}">`}</div>`).join('')}
+  <label class="check"><input type="checkbox" id="n-oath"> I own this item or hold the rights to sell it. It was not stolen, cracked, botted or bought with someone else's money.</label>
+  <div id="n-err" class="note bad" hidden></div>
+  <div><button class="btn" id="n-go" onclick="submitListing()">Submit listing</button></div></div>
+  <div class="panel stack"><h2>${c.name} rules</h2><ul class="rules">${c.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+  <p class="small muted">Escrow hold: ${c.hold} hours.${HIGH_RISK.includes(c.id)?' This is a high-risk category, so a moderator checks every listing.':''}</p>
+  <div class="note bad">Each broken rule is a strike. At 3 strikes Lenzo bans the account and refunds every open order.</div></div></div>`;
+}
+async function upload(file,kind){
+  if(file.size>8*1024*1024)throw new Error('Files must be 8 MB or smaller.');
+  if(file.size<20*1024)throw new Error('That file is too small to read. Upload a clear photo.');
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=`${uid()}/${kind}-${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;
+  const {error}=await sb.storage.from('verification').upload(path,file,{contentType:file.type});
+  if(error)throw error;return path;
+}
+async function submitListing(){
+  const c=CAT[val('n-cat')],e=$('n-err'),btn=$('n-go');
+  const err=m=>{e.textContent=m;e.hidden=false;btn.disabled=false};
+  btn.disabled=true;e.hidden=true;
+  try{
+    const proof={};
+    for(const p of c.proof){const el=$('p-'+p.k);
+      if(p.type==='file'){if(!el.files[0])return err('Upload: '+p.label);proof[p.k]=await upload(el.files[0],'proof')}
+      else{if(!el.value.trim())return err('Fill in: '+p.label);proof[p.k]=el.value.trim()}}
+    const st=await rpc('create_listing',{p_cat:c.id,p_title:val('n-title'),p_descr:val('n-desc'),p_price:parseFloat(val('n-price')),p_stock:parseInt(val('n-stock')),p_secret:val('n-secret'),p_proof:proof,p_oath:$('n-oath').checked});
+    toast(st==='live'?'Your listing is live.':'Listing sent to a moderator for review.');S.tab='listings';render();
+  }catch(x){err(x.message)}
+}
+function salesTable(orders){
+  if(!orders.length)return '<div class="panel muted">No sales yet. Sales show up here with their escrow status.</div>';
+  return `<div class="panel tablewrap"><table><thead><tr><th>Order</th><th>Buyer</th><th>Gross</th><th>You get</th><th>Status</th></tr></thead><tbody>
+  ${orders.map(o=>`<tr><td><b>${esc(o.title)}</b> ×${o.qty}<div class="small muted">${when(o.created_at)}</div>${o.dispute?`<div class="small err">Dispute: ${esc(o.dispute.reason)}. ${esc(o.dispute.text)}</div>`:''}</td>
+  <td>${esc(o.buyer?.name)}</td><td class="num">${money(o.price)}</td><td class="num">${money(o.price*(1-FEE))}</td><td>${statusPill(o)}${o.status==='escrow'?`<div class="small muted">Pays ${when(o.release_at)}</div>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function payoutView(w,app){return `<div class="panel stack" style="max-width:500px"><h2>Payouts</h2><p>Ready to withdraw: <b class="price">${money(w.seller_available)}</b></p>
+  <p class="small muted">Payouts only go to a bank account or wallet in your verified legal name (${esc(app.legal_name)}). Lenzo keeps an ${FEE*100}% fee. You need two-factor sign-in to withdraw.</p>
+  <div><button class="btn" ${w.seller_available<10?'disabled':''} onclick="payout()">Withdraw ${money(w.seller_available)}</button></div>${w.seller_available<10?'<p class="small muted">The minimum payout is $10.</p>':''}</div>`}
+async function payout(){try{const a=await rpc('request_payout');toast('Payout of '+money(a)+' requested.');render()}catch(e){fail(e)}}
+
+/* ----- Seller verification ----- */
+async function vVerify(){
+  const app=await q(sb.from('seller_apps').select('*').eq('user_id',uid()).single());
+  const st=profile.seller_status;
+  if(st==='pending')return `<div class="panel stack" style="max-width:640px"><h1>Seller verification</h1><span><span class="pill warn">In review</span></span>
+    <p>A Lenzo moderator is checking your ID, selfie, proof of address and phone number. This usually takes 24-48 hours.</p><p class="small muted">Submitted ${when(app.submitted_at)}</p></div>`;
+  if(st==='banned')return `<div class="note bad">Selling is turned off for this account.</div>`;
+  const factors=(await sb.auth.mfa.listFactors()).data;
+  const has2fa=(factors?.totp||[]).some(f=>f.status==='verified')&&aal?.currentLevel==='aal2';
+  const done={email:!!session.user.email_confirmed_at,twofa:has2fa,id:['id_front','id_back','selfie','address'].every(k=>vf.docs[k])&&vf.legal,quiz:!!vf.quiz,agreement:!!vf.signature};
+  const order=['email','twofa','id','quiz','agreement'];
+  const first=order.findIndex(k=>!done[k]);
+  const bodies={};if(first>=0)bodies[order[first]]=await stepBody(order[first]);
+  const names={email:'Confirm your email',twofa:'Turn on two-factor authentication',id:'Identity check: government ID, selfie and proof of address',quiz:'Pass the seller rules test (5 of 5)',agreement:'Sign the seller agreement'};
+  return `<div class="stack-lg" style="max-width:780px"><div class="stack"><h1>Become a Lenzo seller</h1>
+  <p class="muted">Every seller passes all five steps, then a moderator reviews the application by hand. Nothing gets listed before that.</p></div>
+  ${st==='rejected'?`<div class="note bad">Your last application was rejected: ${esc(app.reject_reason)}. Fix it and send it again.</div>`:''}
+  ${order.map((k,i)=>{const d=done[k],locked=!d&&i>first;
+    return `<section class="step ${d?'done':''} ${locked?'locked':''}"><div class="num">${d?'✓':i+1}</div><div class="stack"><h3>${names[k]}</h3>${d?'<span class="small muted">Done</span>':locked?'<span class="small muted">Finish the step above first.</span>':bodies[k]}</div></section>`}).join('')}
+  ${first===-1?`<div class="row"><button class="btn" id="app-go" onclick="submitApp()">Send application for review</button></div>`:''}</div>`;
+}
+async function stepBody(k){
+  if(k==='email')return `<p class="small muted">Open the confirmation link we sent to ${esc(session.user.email)}, then reload this page.</p>`;
+  if(k==='twofa'){
+    const f=(await sb.auth.mfa.listFactors()).data;
+    if((f?.totp||[]).some(x=>x.status==='verified'))return `<p class="small muted">Your authenticator is set up. Confirm a code to finish signing in with it.</p><div><button class="btn sm" onclick="mfaModal()">Enter code</button></div>`;
+    return `<p class="small muted">Use Google Authenticator, Authy, 1Password or any TOTP app. You need it to list items and withdraw money.</p><div id="mfa-box"><button class="btn sm" onclick="enroll()">Set up authenticator</button></div>`;
+  }
+  if(k==='id')return `<p class="small muted">You must be 18 or older. Your name must match your ID exactly, and payouts only go to this name. Phone numbers get checked by a moderator, and VoIP numbers are rejected.</p>
+    <div class="grid g2">
+    <div><label class="f" for="v-legal">Full legal name</label><input id="v-legal" value="${esc(vf.legal||'')}"></div>
+    <div><label class="f" for="v-dob">Date of birth</label><input id="v-dob" type="date" value="${esc(vf.dob||'')}"></div>
+    <div><label class="f" for="v-country">Country</label><select id="v-country"><option value="">Choose…</option>${['United States','United Kingdom','Canada','Germany','France','Romania','Poland','Netherlands','Spain','Italy','Australia','Brazil','India','Other'].map(c=>`<option ${vf.country===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div><label class="f" for="v-idtype">ID type</label><select id="v-idtype"><option value="">Choose…</option>${['Passport','National ID card',"Driver's license"].map(c=>`<option ${vf.idType===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div><label class="f" for="v-phone">Mobile number with country code</label><input id="v-phone" placeholder="+15551234567" value="${esc(vf.phone||'')}"></div><div></div>
+    <div><label class="f" for="v-id_front">ID front photo</label><input id="v-id_front" type="file" accept="image/png,image/jpeg,image/webp"></div>
+    <div><label class="f" for="v-id_back">ID back photo</label><input id="v-id_back" type="file" accept="image/png,image/jpeg,image/webp"></div>
+    <div><label class="f" for="v-selfie">Selfie holding your ID and a paper that says "Lenzo ${esc(profile.name)}"</label><input id="v-selfie" type="file" accept="image/png,image/jpeg,image/webp"></div>
+    <div><label class="f" for="v-address">Proof of address, under 3 months old</label><input id="v-address" type="file" accept="image/png,image/jpeg,image/webp,application/pdf"></div></div>
+    <div id="v-err" class="err" hidden></div><div><button class="btn sm" id="v-go" onclick="saveId()">Upload and continue</button></div>`;
+  if(k==='quiz')return `${QUIZ.map((x,i)=>`<fieldset style="border:0;padding:0;margin:0" class="stack"><legend class="small" style="font-weight:600;margin-bottom:4px">${i+1}. ${esc(x.q)}</legend>${x.a.map((a,j)=>`<label class="check"><input type="radio" name="q${i}" value="${j}"> ${esc(a)}</label>`).join('')}</fieldset>`).join('')}
+    <div><button class="btn sm" onclick="checkQuiz()">Submit answers</button></div>`;
+  if(k==='agreement')return `<div class="small" style="max-height:200px;overflow:auto;background:var(--surface-2);padding:12px;border-radius:8px"><b>Lenzo Seller Agreement</b><ul class="rules" style="margin-top:6px">
+    <li>I only sell items I own or have the legal right to resell.</li><li>I never sell stolen, cracked, phished, botted or chargeback-funded goods.</li>
+    <li>I never sell shared logins, lifetime subscriptions or bot members.</li><li>I keep every deal and every message on Lenzo.</li>
+    <li>I accept escrow holds and moderator decisions on disputes.</li><li>Lenzo can freeze my balance and report fraud to the affected platform and to the police.</li>
+    <li>At 3 strikes Lenzo permanently bans my account and my identity.</li></ul></div>
+    <div><label class="f" for="v-sign">Type your full legal name to sign</label><input id="v-sign"></div><div><button class="btn sm" onclick="sign()">Sign agreement</button></div>`;
+}
+async function enroll(){
+  try{
+    const f=(await sb.auth.mfa.listFactors()).data;
+    for(const x of (f?.all||[]).filter(x=>x.status==='unverified'))await sb.auth.mfa.unenroll({factorId:x.id});
+    const {data,error}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Lenzo '+Date.now()});
+    if(error)throw error;
+    $('mfa-box').innerHTML=`<div class="row" style="align-items:flex-start;gap:16px"><img class="qr" src="${data.totp.qr_code}" alt="QR code for your authenticator app">
+      <div class="stack" style="flex:1;min-width:200px"><span class="small muted">Scan the code, or type this key:</span><div class="secret">${esc(data.totp.secret)}</div>
+      <label class="f" for="mfa-code">6-digit code from the app</label><input id="mfa-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <div><button class="btn sm" onclick="verifyEnroll('${data.id}')">Turn on 2FA</button></div></div></div>`;
+  }catch(e){fail(e)}
+}
+async function verifyEnroll(fid){
+  const {error}=await sb.auth.mfa.challengeAndVerify({factorId:fid,code:val('mfa-code')});
+  if(error)return toast('Wrong code. Use the newest code in your app.');
+  await loadMe();toast('Two-factor authentication is on.');render();
+}
+async function saveId(){
+  const e=$('v-err'),b=$('v-go');const err=m=>{e.textContent=m;e.hidden=false;b.disabled=false};
+  const legal=val('v-legal'),dob=val('v-dob'),phone=val('v-phone').replace(/[\s()-]/g,'');
+  if(!/^[\p{L}'-]+( [\p{L}'-]+)+$/u.test(legal))return err('Enter your first and last name as shown on your ID.');
+  if(!dob)return err('Enter your date of birth.');
+  const age=(Date.now()-new Date(dob))/(365.25*864e5);if(age<18)return err('You must be 18 or older to sell on Lenzo.');
+  if(!val('v-country')||!val('v-idtype'))return err('Choose your country and ID type.');
+  if(!/^\+\d{8,15}$/.test(phone))return err('Enter a mobile number with country code, like +15551234567.');
+  const keys=['id_front','id_back','selfie','address'];
+  if(keys.some(k=>!$('v-'+k).files[0]))return err('Upload all 4 documents.');
+  b.disabled=true;b.textContent='Uploading…';
+  try{const docs={};for(const k of keys)docs[k]=await upload($('v-'+k).files[0],'kyc-'+k);
+    vf={...vf,legal,dob,country:val('v-country'),idType:val('v-idtype'),phone,docs};render();}
+  catch(x){b.textContent='Upload and continue';err(x.message)}
+}
+function checkQuiz(){
+  const ans=QUIZ.map((_,i)=>{const p=document.querySelector(`input[name=q${i}]:checked`);return p?+p.value:-1});
+  const right=[1,2,1,1,0].filter((v,i)=>ans[i]===v).length;
+  if(right<5){toast(`You got ${right} of 5. You need all 5. Read the seller rules and try again.`);return}
+  vf.quiz=ans;render();
+}
+function sign(){if(val('v-sign').toLowerCase()!==vf.legal.toLowerCase()){toast('Your signature must match your legal name exactly.');return}vf.signature=val('v-sign');render()}
+async function submitApp(){
+  $('app-go').disabled=true;
+  try{await rpc('submit_seller_application',{p_legal:vf.legal,p_dob:vf.dob,p_country:vf.country,p_id_type:vf.idType,p_phone:vf.phone,p_docs:vf.docs,p_quiz:vf.quiz,p_signature:vf.signature});
+    await loadMe();toast('Application sent. A moderator will review it.');render()}
+  catch(e){$('app-go').disabled=false;fail(e)}
+}
+
+/* ===================== Moderation ===================== */
+async function signed(path){const {data}=await sb.storage.from('verification').createSignedUrl(path,600);return data?.signedUrl}
+async function vAdmin(){
+  const tab=S.tab||'apps';
+  const [pendP,pendL,disputes,reports]=await Promise.all([
+    q(sb.from('profiles').select('id,name,created_at').eq('seller_status','pending')),
+    q(sb.from('listings').select('*,listing_secrets(secret),seller:profiles!listings_seller_id_fkey(name,seller_tier)').eq('status','pending').order('created_at')),
+    q(sb.from('orders').select('*,buyer:profiles!orders_buyer_id_fkey(name),seller:profiles!orders_seller_id_fkey(name)').eq('status','disputed')),
+    q(sb.from('reports').select('*,listing:listings(title,status),reporter:profiles!reports_reporter_id_fkey(name)').eq('open',true))]);
+  const tabs=[['apps',`Seller applications (${pendP.length})`],['listings',`Listing review (${pendL.length})`],['disputes',`Disputes (${disputes.length})`],['reports',`Reports (${reports.length})`],['users','Users']];
+  let body='';
+  if(tab==='apps'){
+    const apps=pendP.length?await q(sb.from('seller_apps').select('*').in('user_id',pendP.map(p=>p.id))):[];
+    body=apps.length?(await Promise.all(apps.map(async a=>{const p=pendP.find(x=>x.id===a.user_id);
+      const links=await Promise.all(Object.entries(a.docs||{}).map(async([k,v])=>`<a href="${esc(await signed(v))}" target="_blank" rel="noopener">${k.replace('_',' ')}</a>`));
+      return `<div class="panel stack"><h3>${esc(p.name)}</h3><div class="grid g2 small"><div>Legal name: <b>${esc(a.legal_name)}</b><br>Born: ${esc(a.dob)}<br>Country: ${esc(a.country)}<br>ID: ${esc(a.id_type)}<br>Phone: ${esc(a.phone)}</div>
+      <div>Documents (links last 10 minutes): ${links.join(' · ')}<br>Account age: ${Math.floor((Date.now()-new Date(p.created_at))/864e5)} days<br>Signed: ${when(a.signed_at)}</div></div>
+      <div class="note">Check that the ID is real and not expired, the selfie matches the ID, the paper says "Lenzo ${esc(p.name)}", the address proof matches the name, and the phone is a real mobile number.</div>
+      <div class="row"><button class="btn ok sm" onclick="decideApp('${a.user_id}',true)">Approve as Tier 1</button><input id="rj-${a.user_id}" placeholder="Rejection reason" style="max-width:260px"><button class="btn bad sm" onclick="decideApp('${a.user_id}',false)">Reject</button></div></div>`}))).join(''):'<div class="panel muted">No applications waiting.</div>';
+  }else if(tab==='listings'){
+    body=pendL.length?(await Promise.all(pendL.map(async l=>{
+      const proof=await Promise.all(Object.entries(l.proof||{}).map(async([k,v])=>k==='screenshot'?`<div>${k}: <a href="${esc(await signed(v))}" target="_blank" rel="noopener">open file</a></div>`:`<div>${esc(k)}: ${esc(v)}</div>`));
+      return `<div class="panel stack"><div class="row"><h3>${esc(l.title)}</h3><span class="pill plain">${CAT[l.cat].name}</span></div>
+      <p class="small">${esc(l.descr)}</p><p class="small muted">${money(l.price)} · stock ${l.stock} · ${esc(l.seller?.name)} (Tier ${l.seller?.seller_tier})</p>
+      <div class="small">${proof.join('')}</div>${l.flags?.length?`<div class="note">Auto flags: ${esc(l.flags.join('; '))}</div>`:''}
+      <div class="small">Delivery content:<div class="secret">${esc(l.listing_secrets?.secret)}</div></div>
+      <div class="row"><button class="btn ok sm" onclick="decideListing('${l.id}',true)">Approve</button><input id="lr-${l.id}" placeholder="Rejection reason" style="max-width:260px"><button class="btn bad sm" onclick="decideListing('${l.id}',false,false)">Reject</button><button class="btn bad sm" onclick="decideListing('${l.id}',false,true)">Reject and strike</button></div></div>`}))).join(''):'<div class="panel muted">No listings waiting.</div>';
+  }else if(tab==='disputes'){
+    body=disputes.length?disputes.map(o=>`<div class="panel stack"><h3>${esc(o.title)} · ${money(o.price)}</h3>
+      <p class="small">Buyer ${esc(o.buyer?.name)}, seller ${esc(o.seller?.name)}<br>Reason: <b>${esc(o.dispute?.reason)}</b><br>${esc(o.dispute?.text)}</p>
+      <div class="small">Delivered:<div class="secret">${esc(o.secret)}</div></div>
+      <div class="row"><button class="btn sm" onclick="resolve('${o.id}',true,false)">Refund buyer</button><button class="btn bad sm" onclick="resolve('${o.id}',true,true)">Refund and strike seller</button><button class="btn ghost sm" onclick="resolve('${o.id}',false,false)">Pay seller</button></div></div>`).join(''):'<div class="panel muted">No open disputes.</div>';
+  }else if(tab==='reports'){
+    body=reports.length?reports.map(r=>`<div class="panel stack"><h3>${esc(r.listing?.title||'Deleted listing')}</h3><p class="small">${esc(r.reason)}. ${esc(r.body)} <span class="muted">Reported by ${esc(r.reporter?.name)}</span></p>
+      <div class="row"><button class="btn bad sm" onclick="closeReport('${r.id}',true)">Remove listing and strike</button><button class="btn ghost sm" onclick="closeReport('${r.id}',false)">Dismiss</button></div></div>`).join(''):'<div class="panel muted">No open reports.</div>';
+  }else{
+    const users=await q(sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(200));
+    body=`<div class="panel tablewrap"><table><thead><tr><th>User</th><th>Seller status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(u.name)}${u.is_admin?' <span class="pill info">Moderator</span>':''}</td><td>${esc(u.seller_status)}${u.seller_tier?' · Tier '+u.seller_tier:''}</td><td>${when(u.created_at)}</td>
+      <td>${u.is_admin?'':u.banned?'<span class="pill bad">Banned</span>':`<button class="btn bad sm" onclick="banModal('${u.id}','${esc(u.name)}')">Ban</button>`}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  return `<div class="stack-lg"><div class="stack"><h1>Moderation</h1><p class="muted">Every seller and every risky listing passes through here.</p></div>
+  <div><div class="tabs" role="tablist">${tabs.map(([k,n])=>`<button class="tab" role="tab" aria-selected="${tab===k}" onclick="S.tab='${k}';render()">${n}</button>`).join('')}</div><div class="stack">${body}</div></div></div>`;
+}
+async function decideApp(id,ok){try{await rpc('admin_decide_app',{p_user:id,p_approve:ok,p_reason:val('rj-'+id)});toast(ok?'Seller approved.':'Application rejected.');render()}catch(e){fail(e)}}
+async function decideListing(id,ok,strike){try{await rpc('admin_decide_listing',{p_id:id,p_approve:ok,p_reason:val('lr-'+id),p_strike:strike});toast(ok?'Listing is live.':'Listing rejected.');render()}catch(e){fail(e)}}
+async function resolve(id,refund,strike){try{await rpc('admin_resolve',{p_id:id,p_refund:refund,p_strike:strike});toast('Dispute closed.');render()}catch(e){fail(e)}}
+async function closeReport(id,remove){try{await rpc('admin_close_report',{p_id:id,p_remove:remove});toast('Report closed.');render()}catch(e){fail(e)}}
+function banModal(id,name){modal(`<h2>Ban ${name}?</h2><p class="muted">Their listings come down and every open order gets refunded to the buyers.</p><div class="row"><button class="btn bad" onclick="doBan('${id}')">Ban account</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`)}
+async function doBan(id){try{await rpc('admin_ban',{p_user:id});closeModal();toast('Account banned.');render()}catch(e){fail(e)}}
+
+/* ===================== Rules ===================== */
+async function vRules(){
+  return `<div class="stack-lg"><div class="stack"><span class="label">Seller verification</span><h1>The rules every Lenzo seller follows</h1>
+  <p class="muted" style="max-width:62ch">Lenzo is strict on purpose. Buyers only trust a market where fraud gets caught fast, so the database itself checks every rule below, not just the page.</p></div>
+  <div class="grid g2">
+  <div class="panel stack"><h2>Who can sell</h2><ul class="rules"><li>A Lenzo account with a confirmed email. You must be 18 or older.</li><li>Two-factor authentication with an authenticator app.</li>
+    <li>A government ID (front and back), a selfie holding the ID with "Lenzo" and your username on paper, and proof of address.</li><li>A real mobile number. VoIP numbers are rejected.</li>
+    <li>A perfect score on the rules test.</li><li>A seller agreement signed with your legal name.</li><li>Manual approval by a moderator.</li><li>One seller account per person. Lenzo blocks duplicate identities and phone numbers.</li></ul></div>
+  <div class="panel stack"><h2>Seller tiers</h2><ul class="rules"><li><b>Tier 1, probation:</b> 3 active listings, $100 max per item, and a moderator checks every listing.</li>
+    <li><b>Tier 2, trusted:</b> unlocked after 10 completed orders with zero refunds. Low-risk listings go live right away.</li>
+    <li>Accounts, Discord, streaming and gift cards always get a manual check, at every tier.</li><li>You need two-factor sign-in to list items or withdraw money.</li></ul></div>
+  <div class="panel stack"><h2>Always banned</h2><ul class="rules"><li>Stolen, cracked, phished, pulled or checked accounts.</li><li>Shared logins, profiles, and lifetime Netflix or streaming accounts.</li>
+    <li>Bot members, self-bots, token joiners and OAuth member boosting.</li><li>Duped, hacked or exploited game items and currency.</li><li>Pirated or leaked ebooks, courses and assets.</li>
+    <li>Anything bought with stolen cards or chargebacks.</li><li>Moving deals off Lenzo to Telegram, WhatsApp or DMs.</li></ul></div>
+  <div class="panel stack"><h2>Enforcement</h2><ul class="rules"><li>Listings with banned words get blocked automatically.</li><li>Gift cards and codes priced more than 15% under face value get blocked.</li>
+    <li>Every order sits in escrow: 24 hours for files, 72 hours for accounts and codes.</li><li>Each broken rule is a strike. At 3 strikes the ban is permanent.</li>
+    <li>A ban refunds every open order from that seller.</li><li>Payouts only go to an account in your verified legal name.</li></ul></div></div>
+  <h2>Category rules</h2><div class="grid g3">${CATS.map(c=>`<div class="panel stack">${tile(c.id)}<h3>${c.name}</h3><ul class="rules small">${c.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul><p class="small muted">Escrow: ${c.hold} hours${HIGH_RISK.includes(c.id)?' · manual check':''}</p></div>`).join('')}</div></div>`;
+}
+
+boot();
+</script>
+
+</html>
