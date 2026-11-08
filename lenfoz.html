@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lenfoz Market</title>
+<meta name="description" content="Lenfoz Market: buy and sell digital goods with a Lenfoz account. Verified sellers, escrow on every order.">
+<style>
+:root{
+  --bg:#0d1017;--panel:#151a24;--panel2:#1c2230;--line:#2a3243;--text:#e7ebf3;--muted:#8d97ab;
+  --brand:#7c5cff;--brand2:#9d85ff;--ok:#2fbf71;--warn:#f0a63a;--bad:#ef5b5b;--info:#3fa7ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:var(--brand2)}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:10;background:rgba(13,16,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.logo{font-weight:800;font-size:20px;letter-spacing:.3px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo span{background:var(--brand);color:#fff;border-radius:8px;padding:2px 8px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.nav-btn{background:none;border:1px solid transparent;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--muted)}
+.nav-btn.active,.nav-btn:hover{color:var(--text);border-color:var(--line);background:var(--panel)}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+.btn{background:var(--brand);border:0;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:600}
+.btn:hover{background:var(--brand2)}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+h1{font-size:26px;margin:0 0 6px}h2{font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:0 0 8px}
+.muted{color:var(--muted)}.small{font-size:13px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+textarea{min-height:80px;resize:vertical}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;background:var(--panel2);border:1px solid var(--line)}
+.pill.ok{color:var(--ok);border-color:#2fbf7155}.pill.warn{color:var(--warn);border-color:#f0a63a55}
+.pill.bad{color:var(--bad);border-color:#ef5b5b55}.pill.info{color:var(--info);border-color:#3fa7ff55}
+.cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:14px 0}
+.cat{white-space:nowrap;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted)}
+.cat.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.item{display:flex;flex-direction:column;gap:8px}
+.item .thumb{height:96px;border-radius:9px;display:grid;place-items:center;font-size:38px;background:linear-gradient(135deg,#2a2150,#162034)}
+.price{font-size:20px;font-weight:800}
+.hero{background:linear-gradient(120deg,#231a4d,#101a2e);border:1px solid var(--line);border-radius:14px;padding:26px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;color:var(--muted)}
+.tab.active{color:var(--text);border-color:var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.tablewrap{overflow-x:auto}
+.step{display:flex;gap:12px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);margin-bottom:10px}
+.step .num{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--line);font-weight:700}
+.step.done .num{background:var(--ok);color:#fff}
+.step.locked{opacity:.5}
+.step .body{flex:1;min-width:0}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
+.stat b{display:block;font-size:22px}
+.notice{border-left:3px solid var(--warn);background:#f0a63a14;padding:10px 14px;border-radius:6px;margin:10px 0}
+.notice.bad{border-color:var(--bad);background:#ef5b5b14}
+.notice.ok{border-color:var(--ok);background:#2fbf7114}
+.secret{font-family:ui-monospace,Consolas,monospace;background:#0a0d13;border:1px dashed var(--line);padding:10px;border-radius:8px;white-space:pre-wrap;word-break:break-all}
+#toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:50;max-width:calc(100vw - 32px)}
+.toast{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--brand);padding:10px 14px;border-radius:8px;box-shadow:0 8px 24px #0008;max-width:360px}
+.modal-bg{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:40;padding:16px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;width:100%;max-width:560px;max-height:90vh;overflow:auto}
+ul.rules{margin:6px 0;padding-left:20px}ul.rules li{margin:3px 0}
+.hide{display:none!important}
+@media(max-width:600px){.bar{gap:8px}nav{margin-left:0;width:100%}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="logo" onclick="go('market')"><span>L</span>Lenfoz Market</div>
+  <nav id="nav"></nav>
+</div></header>
+<main id="app"></main>
+<div id="toasts"></div>
+<div id="modal"></div>
+
+<script>
+/* ===================== Config ===================== */
+const CATS = [
+  {id:'ebooks', name:'Ebooks', icon:'📚', hold:24,
+    rules:['You must be the author or hold written resale rights.','PLR and MRR titles need the license document.','No pirated, scanned or "leaked" books.'],
+    proof:[{k:'rights',label:'Rights type',type:'select',opts:['I am the author','Resale rights license (PLR/MRR)','Publisher agreement']},{k:'isbn',label:'ISBN or license ID',type:'text'}]},
+  {id:'game-items', name:'Game Items', icon:'🗡️', hold:24,
+    rules:['Items must come from normal gameplay or official purchases.','No duped, hacked or botted items.','The game must allow trading, or you must state the risk in the description.'],
+    proof:[{k:'game',label:'Game name',type:'text'},{k:'source',label:'How you got the items',type:'select',opts:['Gameplay drops','In-game trade','Official store purchase']},{k:'screenshot',label:'Inventory screenshot',type:'file'}]},
+  {id:'game-currency', name:'Game Currency', icon:'🪙', hold:24,
+    rules:['Currency must be farmed by hand or bought officially.','No bot farming, exploits or chargeback-funded currency.','Price per unit must stay inside the market range.'],
+    proof:[{k:'game',label:'Game and server/region',type:'text'},{k:'source',label:'Source',type:'select',opts:['Farmed by hand','Official purchase','Trading']},{k:'screenshot',label:'Balance screenshot',type:'file'}]},
+  {id:'accounts', name:'Game Accounts', icon:'🎮', hold:72,
+    rules:['You must be the original owner (first email on the account).','You hand over full access, original email included.','No stolen, cracked, checked or "pulled" accounts. Instant ban.','72 hour escrow on every sale.'],
+    proof:[{k:'game',label:'Game / platform',type:'text'},{k:'created',label:'Account creation date',type:'date'},{k:'ogemail',label:'Original email included?',type:'select',opts:['Yes, full email access','No']},{k:'screenshot',label:'Screenshot of account settings page with your Lenfoz username written on paper',type:'file'}]},
+  {id:'discord-accounts', name:'Discord Accounts', icon:'💬', hold:72,
+    rules:['Original owner only, with the original email transferred.','No token-grabbed, phished or mass-created accounts.','Accounts must be at least 30 days old and in good standing.'],
+    proof:[{k:'created',label:'Account creation date',type:'date'},{k:'ogemail',label:'Original email included?',type:'select',opts:['Yes, full email access','No']},{k:'screenshot',label:'Settings screenshot with your Lenfoz username visible',type:'file'}]},
+  {id:'discord-members', name:'Discord Growth', icon:'📈', hold:72,
+    rules:['Real members only, from opt-in promotion (ads, partner servers, listing sites).','No bots, self-bots, token joiners or OAuth2 "member boosting". Instant ban.','You must name your promotion channel and show past results.'],
+    proof:[{k:'method',label:'Promotion channel',type:'select',opts:['Partner server ads','Server listing sites','Social media promotion','Influencer shoutout']},{k:'portfolio',label:'Link to past work or case study',type:'text'},{k:'screenshot',label:'Screenshot of past campaign results',type:'file'}]},
+  {id:'streaming', name:'Netflix & Streaming', icon:'🎬', hold:72,
+    rules:['Only official gift cards or prepaid codes. Each needs a purchase receipt.','No shared logins, "lifetime" accounts, profiles or cracked accounts.','Price can\'t be more than 15% under face value (that\'s a red flag).'],
+    proof:[{k:'service',label:'Service',type:'select',opts:['Netflix','Spotify','Disney+','YouTube Premium','Crunchyroll','Other']},{k:'face',label:'Face value (USD)',type:'number'},{k:'store',label:'Store bought from',type:'text'},{k:'screenshot',label:'Purchase receipt',type:'file'}]},
+  {id:'software', name:'Software & Keys', icon:'🔑', hold:24,
+    rules:['Keys must come from official retailers or the developer.','No grey-market, volume license or chargeback keys.'],
+    proof:[{k:'store',label:'Store bought from',type:'text'},{k:'screenshot',label:'Purchase receipt',type:'file'}]},
+  {id:'gift-cards', name:'Gift Cards', icon:'🎁', hold:72,
+    rules:['Unused cards only, with receipt.','No cards bought with someone else\'s payment method.'],
+    proof:[{k:'brand',label:'Brand',type:'text'},{k:'face',label:'Face value (USD)',type:'number'},{k:'screenshot',label:'Purchase receipt',type:'file'}]},
+  {id:'assets', name:'Design & Game Assets', icon:'🎨', hold:24,
+    rules:['You made it, or you hold resale rights.','No ripped game models, textures or sounds.'],
+    proof:[{k:'rights',label:'Rights',type:'select',opts:['I made it','Licensed for resale']},{k:'portfolio',label:'Portfolio link',type:'text'}]},
+  {id:'courses', name:'Courses & Guides', icon:'🎓', hold:24,
+    rules:['Original content only. No resold or leaked courses.'],
+    proof:[{k:'portfolio',label:'Sample or preview link',type:'text'}]},
+];
+const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
+
+// Words that auto-reject a listing. Strict on purpose.
+const BANNED = ['cracked','crack','stolen','hacked','nulled','leaked','leak','dupe','duped','checker','combo','combolist','carded','fullz','cvv','token joiner','self bot','selfbot','botted','bot members','lifetime netflix','lifetime account','shared account','method','pulled','phished','grabber','chargeback','free nitro','unlimited'];
+const FEE = 0.08;          // platform fee
+const T1_MAX_LISTINGS = 3, T1_MAX_PRICE = 100, T2_ORDERS = 10;
+
+/* ===================== Storage ===================== */
+const KEY='lenfoz_db_v1';
+let db = load();
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.users)return d}catch(e){}
+  return null;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const now=()=>Date.now();
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'$'+(+n).toFixed(2);
+const fmtDate=t=>new Date(t).toLocaleString();
+async function hash(s){
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('lenfoz:'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  catch(e){let h=0;for(const c of 'lenfoz:'+s)h=(h*31+c.charCodeAt(0))|0;return 'f'+h}
+}
+async function seed(){
+  const adminId=uid(), sellerId=uid();
+  db={users:[
+    {id:adminId,name:'Lenfoz Staff',email:'admin@lenfoz.test',pass:await hash('admin123'),wallet:0,admin:true,created:now(),seller:blankSeller()},
+    {id:sellerId,name:'PixelForge',email:'seller@lenfoz.test',pass:await hash('seller123'),wallet:0,created:now()-90*864e5,
+      seller:{...blankSeller(),status:'approved',tier:2,steps:{email:true,phone:true,id:true,twofa:true,quiz:true,agreement:true},legal:'Demo Seller',approvedAt:now()-60*864e5,balance:0,pending:0,completed:24}},
+  ],listings:[],orders:[],reviews:[],reports:[],session:null};
+  const L=(cat,title,price,stock,desc,secret)=>db.listings.push({id:uid(),sellerId,cat,title,price,stock,desc,secret,proof:{},status:'live',flags:[],created:now()-Math.random()*20*864e5});
+  L('ebooks','Pixel Art for Beginners (PDF, 120 pages)',9.99,999,'Written by me. Step by step guide to pixel art with 40 exercises.','Download: https://example.com/dl/pixel-art.pdf\nLicense key: PX-ART-2026');
+  L('game-currency','10,000 Gold – EU Server (hand farmed)',14.50,20,'Hand farmed, delivered by in-game mail within 2 hours.','Delivery via in-game mail. Send your character name to the seller in chat.');
+  L('game-items','Legendary Sword Skin Bundle',22.00,5,'Official store bundle, tradable. Delivered by trade.','Trade request will be sent to your in-game ID.');
+  L('streaming','Netflix Gift Card $30 (official code + receipt)',29.00,8,'Bought from an official retailer. Unused. Receipt verified by Lenfoz.','Code: NFLX-DEMO-XXXX-XXXX');
+  L('assets','Low-poly Forest Pack (300 models)',18.00,999,'Made by me. Commercial license included.','Download: https://example.com/dl/forest-pack.zip');
+  L('discord-members','Server promotion: 3 partner-server ad posts',35.00,10,'Your server gets posted in 3 partner servers (40k+ real users total). No bots. Results vary.','Send your invite link and banner in order chat.');
+  L('courses','Unity Multiplayer Crash Course (video)',25.00,999,'4 hours of original video lessons.','Access: https://example.com/course/unity-mp');
+  save();
+}
+
+/* ===================== Helpers ===================== */
+function blankSeller(){return {status:'none',tier:0,steps:{email:false,phone:false,id:false,twofa:false,quiz:false,agreement:false},balance:0,pending:0,completed:0,strikes:0}}
+const me=()=>db.session?db.users.find(u=>u.id===db.session):null;
+const user=id=>db.users.find(u=>u.id===id);
+const listing=id=>db.listings.find(l=>l.id===id);
+function toast(msg,ms=4500){const t=document.createElement('div');t.className='toast';t.innerHTML=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),ms)}
+function modal(html){document.getElementById('modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`}
+function closeModal(){document.getElementById('modal').innerHTML=''}
+const val=id=>(document.getElementById(id)?.value||'').trim();
+function rating(sellerId){const r=db.reviews.filter(x=>x.sellerId===sellerId);if(!r.length)return 'New seller';return '★ '+(r.reduce((a,b)=>a+b.stars,0)/r.length).toFixed(1)+' ('+r.length+')'}
+function sellerTier(u){const s=u.seller;if(s.status!=='approved')return null;return s.tier||1}
+
+// Release escrow when the hold expires and nobody opened a dispute.
+function tick(){
+  let changed=false;
+  for(const o of db.orders){
+    if(o.status==='escrow'&&now()>=o.releaseAt){release(o);changed=true}
+  }
+  if(changed)save();
+}
+function release(o){
+  const s=user(o.sellerId);o.status='completed';o.closedAt=now();
+  const net=+(o.price*(1-FEE)).toFixed(2);
+  s.seller.pending=+(s.seller.pending-net).toFixed(2);s.seller.balance=+(s.seller.balance+net).toFixed(2);
+  s.seller.completed=(s.seller.completed||0)+1;
+  const disputes=db.orders.filter(x=>x.sellerId===s.id&&x.status==='refunded').length;
+  if(s.seller.tier===1&&s.seller.completed>=T2_ORDERS&&disputes===0){s.seller.tier=2}
+}
+
+/* ===================== Router ===================== */
+let view='market', state={cat:'all',q:'',sort:'new',tab:null};
+function go(v,extra){view=v;Object.assign(state,extra||{});if(!extra||!('tab' in extra))state.tab=null;render();window.scrollTo(0,0)}
+function render(){
+  tick();
+  const u=me();
+  const links=[['market','Marketplace'],['rules','Seller rules']];
+  if(u){links.push(['buyer','Buyer panel'],['seller','Seller panel']);if(u.admin)links.push(['admin','Moderation'])}
+  document.getElementById('nav').innerHTML=links.map(([k,n])=>`<button class="nav-btn ${view===k?'active':''}" onclick="go('${k}')">${n}</button>`).join('')+
+    (u?`<button class="nav-btn" onclick="logout()">Sign out (${esc(u.name)})</button>`:`<button class="btn sm" onclick="authModal('in')">Sign in with Lenfoz</button>`);
+  const app=document.getElementById('app');
+  if((view==='buyer'||view==='seller'||view==='admin')&&!u){app.innerHTML=needLogin();return}
+  if(view==='admin'&&!u.admin){view='market'}
+  app.innerHTML=({market:viewMarket,rules:viewRules,buyer:viewBuyer,seller:viewSeller,admin:viewAdmin,item:viewItem}[view]||viewMarket)();
+}
+function needLogin(){return `<div class="card" style="max-width:460px;margin:40px auto;text-align:center"><h2>Sign in with your Lenfoz account</h2><p class="muted">You need a Lenfoz account to buy or sell.</p><div class="row" style="justify-content:center"><button class="btn" onclick="authModal('in')">Sign in</button><button class="btn ghost" onclick="authModal('up')">Create account</button></div></div>`}
+
+/* ===================== Auth ===================== */
+function authModal(mode){
+  const up=mode==='up';
+  modal(`<h2>${up?'Create your Lenfoz account':'Sign in with Lenfoz'}</h2>
+  ${up?`<label>Display name</label><input id="a-name" maxlength="24">`:''}
+  <label>Email</label><input id="a-email" type="email">
+  <label>Password ${up?'(10+ characters, a number and a letter)':''}</label><input id="a-pass" type="password">
+  ${up?`<label class="row" style="color:var(--text)"><input type="checkbox" id="a-age" style="width:auto"> I am 18 or older and accept the Lenfoz terms</label>`:''}
+  <div id="a-err" class="notice bad hide"></div>
+  <div class="row" style="margin-top:14px"><button class="btn" onclick="${up?'signup()':'signin()'}">${up?'Create account':'Sign in'}</button>
+  <span class="spacer"></span><a href="#" onclick="authModal('${up?'in':'up'}');return false">${up?'I have an account':'Create a Lenfoz account'}</a></div>
+  ${!up?`<p class="small muted" style="margin-top:14px">Demo logins: admin@lenfoz.test / admin123 (moderator), seller@lenfoz.test / seller123 (verified seller)</p>`:''}`);
+}
+function authErr(m){const e=document.getElementById('a-err');e.textContent=m;e.classList.remove('hide')}
+async function signup(){
+  const name=val('a-name'),email=val('a-email').toLowerCase(),pass=document.getElementById('a-pass').value;
+  if(name.length<3)return authErr('Display name needs 3+ characters.');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return authErr('Enter a valid email.');
+  if(pass.length<10||!/\d/.test(pass)||!/[a-z]/i.test(pass))return authErr('Password needs 10+ characters with a letter and a number.');
+  if(!document.getElementById('a-age').checked)return authErr('You must be 18+ and accept the terms.');
+  if(db.users.some(u=>u.email===email))return authErr('That email already has a Lenfoz account.');
+  if(db.users.some(u=>u.name.toLowerCase()===name.toLowerCase()))return authErr('That display name is taken.');
+  const u={id:uid(),name,email,pass:await hash(pass),wallet:0,created:now(),seller:blankSeller()};
+  db.users.push(u);db.session=u.id;save();closeModal();toast('Welcome to Lenfoz, '+esc(name)+'!');render();
+}
+async function signin(){
+  const email=val('a-email').toLowerCase(),pass=document.getElementById('a-pass').value;
+  const u=db.users.find(x=>x.email===email);
+  if(!u||u.pass!==await hash(pass))return authErr('Wrong email or password.');
+  if(u.banned)return authErr('This Lenfoz account is banned: '+u.banned);
+  db.session=u.id;save();closeModal();toast('Signed in as '+esc(u.name));render();
+}
+function logout(){db.session=null;save();go('market')}
+
+/* ===================== Marketplace ===================== */
+function viewMarket(){
+  let items=db.listings.filter(l=>l.status==='live'&&l.stock>0&&!user(l.sellerId)?.banned);
+  if(state.cat!=='all')items=items.filter(l=>l.cat===state.cat);
+  if(state.q)items=items.filter(l=>(l.title+' '+l.desc).toLowerCase().includes(state.q.toLowerCase()));
+  items.sort(state.sort==='low'?(a,b)=>a.price-b.price:state.sort==='high'?(a,b)=>b.price-a.price:(a,b)=>b.created-a.created);
+  return `<section class="hero"><h1>Digital goods from verified sellers</h1>
+    <p class="muted" style="margin:0 0 14px">Every seller passes ID checks. Every order sits in escrow until you confirm it works.</p>
+    <div class="row"><input id="q" placeholder="Search ebooks, gold, gift cards..." value="${esc(state.q)}" style="max-width:420px" onkeydown="if(event.key==='Enter'){state.q=this.value;render()}">
+    <button class="btn" onclick="state.q=val('q');render()">Search</button>
+    <select style="width:auto" onchange="state.sort=this.value;render()">
+      <option value="new" ${state.sort==='new'?'selected':''}>Newest</option><option value="low" ${state.sort==='low'?'selected':''}>Price: low to high</option><option value="high" ${state.sort==='high'?'selected':''}>Price: high to low</option></select></div></section>
+  <div class="cats"><button class="cat ${state.cat==='all'?'active':''}" onclick="state.cat='all';render()">All</button>
+    ${CATS.map(c=>`<button class="cat ${state.cat===c.id?'active':''}" onclick="state.cat='${c.id}';render()">${c.icon} ${c.name}</button>`).join('')}</div>
+  ${items.length?`<div class="grid g3">${items.map(card).join('')}</div>`:`<div class="card muted">No listings here yet.</div>`}`;
+}
+function card(l){const c=CAT[l.cat],s=user(l.sellerId);
+  return `<div class="card item"><div class="thumb">${c.icon}</div><span class="pill">${c.name}</span>
+  <b>${esc(l.title)}</b><div class="small muted">by ${esc(s.name)} · ${rating(s.id)} ${sellerTier(s)===2?'<span class="pill ok">Trusted</span>':''}</div>
+  <div class="row"><span class="price">${money(l.price)}</span><span class="spacer"></span><button class="btn sm" onclick="go('item',{item:'${l.id}'})">View</button></div></div>`}
+function viewItem(){
+  const l=listing(state.item);if(!l)return '<div class="card">Listing not found.</div>';
+  const c=CAT[l.cat],s=user(l.sellerId),u=me();
+  const reviews=db.reviews.filter(r=>r.listingId===l.id);
+  return `<button class="btn ghost sm" onclick="go('market')">← Back</button>
+  <div class="grid g2" style="margin-top:14px"><div class="card"><div class="thumb" style="height:180px;font-size:70px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#2a2150,#162034)">${c.icon}</div>
+    <h1 style="margin-top:14px">${esc(l.title)}</h1><span class="pill">${c.name}</span>
+    <p style="white-space:pre-wrap">${esc(l.desc)}</p>
+    <h3>Reviews</h3>${reviews.length?reviews.map(r=>`<div class="small" style="margin:6px 0">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)} <span class="muted">${esc(user(r.buyerId)?.name)}</span><br>${esc(r.text)}</div>`).join(''):'<p class="muted small">No reviews yet.</p>'}
+  </div><div class="card"><div class="price" style="font-size:30px">${money(l.price)}</div>
+    <p class="muted">${l.stock} in stock</p>
+    <p>Seller: <b>${esc(s.name)}</b> · ${rating(s.id)} ${sellerTier(s)===2?'<span class="pill ok">Trusted seller</span>':'<span class="pill info">Verified seller</span>'}</p>
+    <div class="notice ok small">Escrow protection: your money is held for <b>${c.hold} hours</b> after delivery. Open a dispute in that window if something is wrong.</div>
+    ${u&&u.id===s.id?'<p class="muted">This is your listing.</p>':`<label>Quantity</label><input id="qty" type="number" min="1" max="${l.stock}" value="1">
+    <button class="btn" style="width:100%;margin-top:12px" onclick="buy('${l.id}')">Buy now</button>`}
+    <button class="btn ghost sm" style="margin-top:10px" onclick="reportModal('${l.id}')">Report listing</button>
+    <h3 style="margin-top:16px">Category rules</h3><ul class="rules small muted">${c.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+  </div></div>`;
+}
+function buy(id){
+  const u=me();if(!u)return authModal('in');
+  const l=listing(id),qty=Math.max(1,Math.min(l.stock,parseInt(val('qty'))||1)),total=+(l.price*qty).toFixed(2);
+  if(u.wallet<total){toast(`You need ${money(total)}, your wallet has ${money(u.wallet)}. Add funds in the buyer panel.`);return}
+  modal(`<h2>Confirm purchase</h2><p>${esc(l.title)} × ${qty}</p><p class="price">${money(total)}</p>
+  <p class="small muted">The money leaves your wallet and goes into escrow. The seller gets paid after ${CAT[l.cat].hold}h, or sooner when you confirm.</p>
+  <div class="row"><button class="btn" onclick="confirmBuy('${id}',${qty})">Pay ${money(total)}</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+}
+function confirmBuy(id,qty){
+  const u=me(),l=listing(id),s=user(l.sellerId),total=+(l.price*qty).toFixed(2);
+  if(u.wallet<total||l.stock<qty)return;
+  u.wallet=+(u.wallet-total).toFixed(2);l.stock-=qty;
+  s.seller.pending=+(s.seller.pending+total*(1-FEE)).toFixed(2);
+  db.orders.push({id:uid(),buyerId:u.id,sellerId:s.id,listingId:l.id,title:l.title,cat:l.cat,qty,price:total,status:'escrow',created:now(),releaseAt:now()+CAT[l.cat].hold*3600e3,secret:l.secret,messages:[]});
+  save();closeModal();toast('Order placed. Find your delivery in the buyer panel.');go('buyer',{tab:'orders'});
+}
+function reportModal(id){
+  if(!me())return authModal('in');
+  modal(`<h2>Report listing</h2><label>Reason</label><select id="r-reason"><option>Stolen or cracked goods</option><option>Bots or fake members</option><option>Shared or resold login</option><option>Pirated content</option><option>Scam or misleading</option><option>Other</option></select>
+  <label>Details</label><textarea id="r-text"></textarea><div class="row" style="margin-top:12px"><button class="btn bad" onclick="sendReport('${id}')">Send report</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+}
+function sendReport(id){db.reports.push({id:uid(),listingId:id,by:me().id,reason:val('r-reason'),text:val('r-text'),created:now(),open:true});save();closeModal();toast('Report sent to Lenfoz moderators.')}
+
+/* ===================== Buyer panel ===================== */
+function viewBuyer(){
+  const u=me(),tab=state.tab||'orders',orders=db.orders.filter(o=>o.buyerId===u.id).sort((a,b)=>b.created-a.created);
+  const spent=orders.filter(o=>o.status!=='refunded').reduce((a,o)=>a+o.price,0);
+  return `<h1>Buyer panel</h1><p class="muted">Your Lenfoz account: ${esc(u.email)}</p>
+  <div class="grid g4" style="margin:14px 0"><div class="stat"><span class="muted small">Wallet</span><b>${money(u.wallet)}</b></div>
+  <div class="stat"><span class="muted small">Orders</span><b>${orders.length}</b></div>
+  <div class="stat"><span class="muted small">In escrow</span><b>${orders.filter(o=>o.status==='escrow').length}</b></div>
+  <div class="stat"><span class="muted small">Total spent</span><b>${money(spent)}</b></div></div>
+  <div class="tabs">${[['orders','Orders'],['wallet','Wallet']].map(([k,n])=>`<button class="tab ${tab===k?'active':''}" onclick="state.tab='${k}';render()">${n}</button>`).join('')}</div>
+  ${tab==='wallet'?`<div class="card" style="max-width:460px"><h2>Add funds</h2><p class="small muted">Demo only. No real money moves. Hook up a payment provider before launch.</p>
+    <div class="row">${[10,25,50,100].map(a=>`<button class="btn ghost" onclick="addFunds(${a})">+${money(a)}</button>`).join('')}</div></div>`:
+  orders.length?`<div class="tablewrap card"><table><tr><th>Item</th><th>Price</th><th>Status</th><th>Delivery</th><th></th></tr>
+  ${orders.map(o=>`<tr><td><b>${esc(o.title)}</b><div class="small muted">${fmtDate(o.created)} · seller ${esc(user(o.sellerId)?.name)}</div></td><td>${money(o.price)}</td><td>${statusPill(o)}</td>
+  <td>${o.status==='refunded'?'<span class="muted small">Refunded</span>':`<div class="secret small">${esc(o.secret)}</div>`}</td>
+  <td>${o.status==='escrow'?`<div class="row"><button class="btn ok sm" onclick="confirmOrder('${o.id}')">It works, release</button><button class="btn bad sm" onclick="disputeModal('${o.id}')">Dispute</button></div><div class="small muted">Auto-release ${fmtDate(o.releaseAt)}</div>`:
+    o.status==='completed'&&!db.reviews.some(r=>r.orderId===o.id)?`<button class="btn ghost sm" onclick="reviewModal('${o.id}')">Leave review</button>`:o.status==='disputed'?'<span class="small muted">Moderator reviewing</span>':''}</td></tr>`).join('')}</table></div>`:
+  `<div class="card muted">No orders yet. <a href="#" onclick="go('market');return false">Browse the market</a>.</div>`}`;
+}
+function statusPill(o){return {escrow:'<span class="pill warn">In escrow</span>',completed:'<span class="pill ok">Completed</span>',disputed:'<span class="pill bad">Disputed</span>',refunded:'<span class="pill info">Refunded</span>'}[o.status]}
+function addFunds(a){const u=me();u.wallet=+(u.wallet+a).toFixed(2);save();toast('Added '+money(a)+' (demo)');render()}
+function confirmOrder(id){const o=db.orders.find(x=>x.id===id);if(o.status!=='escrow')return;release(o);save();toast('Payment released to the seller.');render()}
+function disputeModal(id){modal(`<h2>Open a dispute</h2><p class="small muted">A moderator checks the order and decides. Funds stay frozen until then.</p>
+  <label>What went wrong?</label><select id="d-reason"><option>Item not delivered</option><option>Login does not work / recovered by seller</option><option>Not as described</option><option>Code already used</option></select>
+  <label>Details and proof</label><textarea id="d-text"></textarea><div class="row" style="margin-top:12px"><button class="btn bad" onclick="openDispute('${id}')">Open dispute</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`)}
+function openDispute(id){const o=db.orders.find(x=>x.id===id);if(val('d-text').length<15){toast('Add at least 15 characters of detail.');return}
+  o.status='disputed';o.dispute={reason:val('d-reason'),text:val('d-text'),at:now()};save();closeModal();toast('Dispute opened. Funds are frozen.');render()}
+function reviewModal(id){modal(`<h2>Leave a review</h2><label>Stars</label><select id="rv-s">${[5,4,3,2,1].map(n=>`<option value="${n}">${'★'.repeat(n)}</option>`).join('')}</select>
+  <label>Review</label><textarea id="rv-t"></textarea><div class="row" style="margin-top:12px"><button class="btn" onclick="sendReview('${id}')">Post</button></div>`)}
+function sendReview(id){const o=db.orders.find(x=>x.id===id);db.reviews.push({id:uid(),orderId:id,listingId:o.listingId,sellerId:o.sellerId,buyerId:o.buyerId,stars:+val('rv-s'),text:val('rv-t'),at:now()});save();closeModal();render()}
+
+/* ===================== Seller panel ===================== */
+const STEPS=[
+  ['email','Verify your email'],['phone','Verify your phone'],['id','Identity check (government ID + selfie)'],
+  ['twofa','Turn on two-factor authentication'],['quiz','Pass the seller rules test (5/5 required)'],['agreement','Sign the seller agreement'],
+];
+let pendingCode={};
+function viewSeller(){
+  const u=me(),s=u.seller;
+  if(s.status!=='approved')return viewVerify(u);
+  const tab=state.tab||'listings',mine=db.listings.filter(l=>l.sellerId===u.id),orders=db.orders.filter(o=>o.sellerId===u.id).sort((a,b)=>b.created-a.created);
+  const t=s.tier;
+  return `<h1>Seller panel</h1><div class="row"><span class="pill ok">Verified seller</span>${t===2?'<span class="pill ok">Tier 2 · Trusted</span>':'<span class="pill warn">Tier 1 · Probation</span>'}${s.strikes?`<span class="pill bad">${s.strikes} strike(s)</span>`:''}</div>
+  ${t===1?`<div class="notice small">Probation limits: max ${T1_MAX_LISTINGS} live listings, max ${money(T1_MAX_PRICE)} per item, every listing reviewed by hand. Finish ${T2_ORDERS} orders with zero refunds to reach Tier 2. You have ${s.completed||0}.</div>`:''}
+  <div class="grid g4" style="margin:14px 0"><div class="stat"><span class="muted small">Available</span><b>${money(s.balance)}</b></div>
+  <div class="stat"><span class="muted small">In escrow</span><b>${money(Math.max(0,s.pending))}</b></div>
+  <div class="stat"><span class="muted small">Live listings</span><b>${mine.filter(l=>l.status==='live').length}</b></div>
+  <div class="stat"><span class="muted small">Completed orders</span><b>${s.completed||0}</b></div></div>
+  <div class="tabs">${[['listings','My listings'],['new','New listing'],['orders','Sales'],['payout','Payouts']].map(([k,n])=>`<button class="tab ${tab===k?'active':''}" onclick="state.tab='${k}';render()">${n}</button>`).join('')}</div>
+  ${tab==='new'?newListingForm():tab==='orders'?salesTable(orders):tab==='payout'?payoutView(u):listingsTable(mine)}`;
+}
+function listingsTable(mine){
+  if(!mine.length)return `<div class="card muted">No listings yet. <a href="#" onclick="state.tab='new';render();return false">Create one</a>.</div>`;
+  const pill={live:'<span class="pill ok">Live</span>',pending:'<span class="pill warn">In review</span>',rejected:'<span class="pill bad">Rejected</span>',paused:'<span class="pill">Paused</span>'};
+  return `<div class="card tablewrap"><table><tr><th>Listing</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr>
+  ${mine.map(l=>`<tr><td><b>${esc(l.title)}</b><div class="small muted">${CAT[l.cat].name}</div>${l.rejectReason?`<div class="small" style="color:var(--bad)">${esc(l.rejectReason)}</div>`:''}${l.flags.length?`<div class="small" style="color:var(--warn)">Flags: ${esc(l.flags.join('; '))}</div>`:''}</td>
+  <td>${money(l.price)}</td><td>${l.stock}</td><td>${pill[l.status]}</td>
+  <td>${l.status==='live'?`<button class="btn ghost sm" onclick="setListing('${l.id}','paused')">Pause</button>`:l.status==='paused'?`<button class="btn ghost sm" onclick="setListing('${l.id}','live')">Resume</button>`:''}
+  <button class="btn ghost sm" onclick="delListing('${l.id}')">Delete</button></td></tr>`).join('')}</table></div>`;
+}
+function setListing(id,st){listing(id).status=st;save();render()}
+function delListing(id){db.listings=db.listings.filter(l=>l.id!==id);save();render()}
+function newListingForm(){
+  const c=CAT[state.newCat||'ebooks'];
+  return `<div class="grid g2"><div class="card"><h2>New listing</h2>
+  <label>Category</label><select id="n-cat" onchange="state.newCat=this.value;render()">${CATS.map(x=>`<option value="${x.id}" ${x.id===c.id?'selected':''}>${x.icon} ${x.name}</option>`).join('')}</select>
+  <label>Title (10-80 characters)</label><input id="n-title" maxlength="80">
+  <label>Description (40+ characters, be exact about what the buyer gets)</label><textarea id="n-desc"></textarea>
+  <div class="row"><div style="flex:1"><label>Price (USD)</label><input id="n-price" type="number" min="1" step="0.01"></div><div style="flex:1"><label>Stock</label><input id="n-stock" type="number" min="1" value="1"></div></div>
+  <label>Delivery content (shown to the buyer only after payment)</label><textarea id="n-secret" placeholder="Download link, code, login handover steps..."></textarea>
+  <h3 style="margin-top:16px">Proof for ${c.name}</h3>
+  ${c.proof.map(p=>`<label>${esc(p.label)} *</label>${p.type==='select'?`<select id="p-${p.k}"><option value="">Choose...</option>${p.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select>`:p.type==='file'?`<input id="p-${p.k}" type="file" accept="image/*,.pdf">`:`<input id="p-${p.k}" type="${p.type}">`}`).join('')}
+  <label class="row" style="color:var(--text);margin-top:14px"><input type="checkbox" id="n-oath" style="width:auto"> I confirm I own this item or hold the rights to sell it, and it was not stolen, cracked, botted or bought with someone else's money.</label>
+  <div id="n-err" class="notice bad hide"></div>
+  <button class="btn" style="margin-top:12px" onclick="submitListing()">Submit for review</button></div>
+  <div class="card"><h2>${c.icon} ${c.name} rules</h2><ul class="rules">${c.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+  <p class="small muted">Escrow hold for this category: ${c.hold} hours.</p>
+  <div class="notice bad small">Breaking a rule means a strike. 3 strikes and your Lenfoz account is banned and unpaid balance goes back to buyers.</div></div></div>`;
+}
+function submitListing(){
+  const u=me(),s=u.seller,c=CAT[val('n-cat')];
+  const err=m=>{const e=document.getElementById('n-err');e.innerHTML=m;e.classList.remove('hide')};
+  const title=val('n-title'),desc=val('n-desc'),price=parseFloat(val('n-price')),stock=parseInt(val('n-stock')),secret=val('n-secret');
+  if(title.length<10)return err('Title needs at least 10 characters.');
+  if(desc.length<40)return err('Description needs at least 40 characters.');
+  if(!(price>=1))return err('Minimum price is $1.00.');
+  if(!(stock>=1))return err('Stock must be at least 1.');
+  if(secret.length<5)return err('Add the delivery content.');
+  const proof={};
+  for(const p of c.proof){const el=document.getElementById('p-'+p.k);
+    if(p.type==='file'){if(!el.files[0])return err('Upload: '+esc(p.label));const f=el.files[0];if(f.size>8e6)return err('File too large (max 8 MB).');proof[p.k]=f.name+' ('+Math.round(f.size/1024)+' KB)'}
+    else{if(!el.value.trim())return err('Fill in: '+esc(p.label));proof[p.k]=el.value.trim()}}
+  if(!document.getElementById('n-oath').checked)return err('You must confirm ownership.');
+  // Hard blocks
+  const text=(title+' '+desc+' '+secret).toLowerCase();
+  const hit=BANNED.filter(w=>new RegExp('\\b'+w.replace(/ /g,'\\s+')+'\\b').test(text));
+  if(hit.length){s.strikes=(s.strikes||0)+0;return err('Blocked words found: <b>'+esc(hit.join(', '))+'</b>. Listings that mention these are not allowed on Lenfoz.')}
+  if((c.id==='accounts'||c.id==='discord-accounts')&&proof.ogemail!=='Yes, full email access')return err('Account sales require full original email access. No exceptions.');
+  if(c.id==='discord-accounts'&&proof.created&&(now()-new Date(proof.created))<30*864e5)return err('Discord accounts must be at least 30 days old.');
+  if(proof.face){const face=parseFloat(proof.face);if(!(face>0))return err('Enter the face value.');if(price<face*0.85)return err('Price is more than 15% under face value. That pattern matches stolen cards, so it is blocked.');if(price>face*1.25)return err('Price can\'t be more than 25% over face value.')}
+  const live=db.listings.filter(l=>l.sellerId===u.id&&(l.status==='live'||l.status==='pending')).length;
+  if(s.tier===1){if(live>=T1_MAX_LISTINGS)return err(`Tier 1 sellers can have ${T1_MAX_LISTINGS} active listings.`);if(price>T1_MAX_PRICE)return err(`Tier 1 sellers can list items up to ${money(T1_MAX_PRICE)}.`)}
+  // Soft flags send a Tier 2 listing to manual review too
+  const flags=[];
+  if(/discord|nitro/.test(text)&&c.id!=='discord-accounts'&&c.id!=='discord-members')flags.push('Mentions Discord outside a Discord category');
+  if(/netflix|spotify|disney|hbo/.test(text)&&!['streaming','gift-cards'].includes(c.id))flags.push('Mentions a streaming service outside the streaming category');
+  if(/password|login|email:pass/.test(text)&&!['accounts','discord-accounts'].includes(c.id))flags.push('Contains login details in a non-account category');
+  if(price>500)flags.push('High price (over $500)');
+  if(/(t\.me|telegram|whatsapp|wa\.me|discord\.gg)/.test(desc.toLowerCase()))flags.push('Off-platform contact in description');
+  const needsReview=s.tier===1||flags.length||['accounts','discord-accounts','discord-members','streaming','gift-cards'].includes(c.id);
+  db.listings.push({id:uid(),sellerId:u.id,cat:c.id,title,desc,price:+price.toFixed(2),stock,secret,proof,flags,status:needsReview?'pending':'live',created:now()});
+  save();toast(needsReview?'Listing sent to manual review.':'Listing is live.');state.tab='listings';render();
+}
+function salesTable(orders){
+  if(!orders.length)return '<div class="card muted">No sales yet.</div>';
+  return `<div class="card tablewrap"><table><tr><th>Order</th><th>Buyer</th><th>Gross</th><th>You get</th><th>Status</th></tr>
+  ${orders.map(o=>`<tr><td><b>${esc(o.title)}</b> ×${o.qty}<div class="small muted">${fmtDate(o.created)}</div>${o.dispute?`<div class="small" style="color:var(--bad)">Dispute: ${esc(o.dispute.reason)} · ${esc(o.dispute.text)}</div>`:''}</td>
+  <td>${esc(user(o.buyerId)?.name)}</td><td>${money(o.price)}</td><td>${money(o.price*(1-FEE))}</td><td>${statusPill(o)}${o.status==='escrow'?`<div class="small muted">Releases ${fmtDate(o.releaseAt)}</div>`:''}</td></tr>`).join('')}</table></div>`;
+}
+function payoutView(u){const s=u.seller;return `<div class="card" style="max-width:480px"><h2>Payouts</h2><p>Available: <b>${money(s.balance)}</b></p>
+  <p class="small muted">Payouts go only to a bank account or wallet in your verified legal name (${esc(s.legal||'')}). First payout has a 7 day hold. Platform fee is ${FEE*100}%.</p>
+  <button class="btn" ${s.balance<10?'disabled':''} onclick="payout()">Withdraw ${money(s.balance)}</button>${s.balance<10?'<p class="small muted">Minimum payout is $10.</p>':''}</div>`}
+function payout(){const s=me().seller;toast('Payout of '+money(s.balance)+' requested (demo).');s.balance=0;save();render()}
+
+/* ----- Verification flow ----- */
+const QUIZ=[
+  {q:'A buyer asks you to finish the deal on Telegram to skip fees. What do you do?',a:['Agree, it saves money','Decline and keep the deal on Lenfoz','Ask for a deposit first'],c:1},
+  {q:'You bought a Netflix account login from another site. Can you list it?',a:['Yes, under Netflix & Streaming','Yes, if the price is low','No. Shared or resold logins are banned'],c:2},
+  {q:'Which Discord Growth service is allowed?',a:['Token-joined members','Ads in real partner servers','Self-bot invites'],c:1},
+  {q:'You sell a game account. What must you hand over?',a:['Only the username and password','Full access, including the original email','A screenshot'],c:1},
+  {q:'A buyer opens a dispute. What happens to the money?',a:['It stays frozen until a moderator decides','It goes to you right away','It is deleted'],c:0},
+];
+function viewVerify(u){
+  const s=u.seller,steps=s.steps;
+  const firstOpen=STEPS.findIndex(([k])=>!steps[k]);
+  if(s.status==='pending')return `<h1>Seller verification</h1><div class="card"><span class="pill warn">In manual review</span><p>A Lenfoz moderator is checking your ID, selfie and answers. This usually takes 24-48 hours. You'll see the result here.</p><p class="small muted">Submitted ${fmtDate(s.submittedAt)}</p></div>`;
+  if(s.status==='banned')return `<h1>Seller verification</h1><div class="notice bad">Selling is disabled on this account.</div>`;
+  return `<h1>Become a Lenfoz seller</h1>
+  <p class="muted">Lenfoz verifies every seller before they can list anything. Finish all 6 steps, then a moderator reviews your application by hand.</p>
+  ${s.status==='rejected'?`<div class="notice bad">Your last application was rejected: ${esc(s.rejectReason)}. Fix it and resubmit.</div>`:''}
+  ${STEPS.map(([k,n],i)=>{const done=steps[k],locked=!done&&i>firstOpen;
+    return `<div class="step ${done?'done':''} ${locked?'locked':''}"><div class="num">${done?'✓':i+1}</div><div class="body"><b>${n}</b>${done?'<div class="small muted">Done</div>':locked?'<div class="small muted">Finish the step above first</div>':stepBody(k,u)}</div></div>`}).join('')}
+  ${firstOpen===-1?`<button class="btn" onclick="submitApp()">Submit application for review</button>`:''}`;
+}
+function stepBody(k,u){
+  if(k==='email')return `<p class="small muted">We send a code to ${esc(u.email)}.</p><div class="row"><button class="btn ghost sm" onclick="sendCode('email')">Send code</button><input id="v-email" placeholder="6-digit code" style="max-width:160px"><button class="btn sm" onclick="checkCode('email')">Verify</button></div>`;
+  if(k==='phone')return `<p class="small muted">Mobile numbers only. VoIP and virtual numbers are rejected.</p><div class="row"><input id="v-phonenum" placeholder="+1 555 123 4567" style="max-width:200px"><button class="btn ghost sm" onclick="sendCode('phone')">Send SMS</button><input id="v-phone" placeholder="Code" style="max-width:120px"><button class="btn sm" onclick="checkCode('phone')">Verify</button></div>`;
+  if(k==='id')return `<p class="small muted">You must be 18+. The name must match your ID exactly. Payouts only go to this name.</p>
+    <div class="grid g2"><div><label>Full legal name</label><input id="v-legal"></div><div><label>Date of birth</label><input id="v-dob" type="date"></div>
+    <div><label>Country</label><select id="v-country"><option value="">Choose...</option>${['United States','United Kingdom','Canada','Germany','France','Romania','Poland','Netherlands','Spain','Italy','Australia','Brazil','India','Other'].map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div><label>ID type</label><select id="v-idtype"><option value="">Choose...</option><option>Passport</option><option>National ID card</option><option>Driver's license</option></select></div>
+    <div><label>ID front photo</label><input id="v-idfront" type="file" accept="image/*"></div><div><label>ID back photo</label><input id="v-idback" type="file" accept="image/*"></div>
+    <div><label>Selfie holding your ID and a paper with "Lenfoz ${esc(u.name)}"</label><input id="v-selfie" type="file" accept="image/*"></div>
+    <div><label>Proof of address (under 3 months old)</label><input id="v-addr" type="file" accept="image/*,.pdf"></div></div>
+    <button class="btn sm" style="margin-top:10px" onclick="submitId()">Submit ID</button>`;
+  if(k==='twofa'){if(!pendingCode.twofaSecret)pendingCode.twofaSecret=Array.from({length:16},()=>'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[Math.random()*32|0]).join('');
+    return `<p class="small muted">Add this key to your authenticator app, then enter the 6-digit code.</p><div class="secret small">${pendingCode.twofaSecret}</div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost sm" onclick="sendCode('twofa')">Show demo code</button><input id="v-twofa" placeholder="6-digit code" style="max-width:160px"><button class="btn sm" onclick="checkCode('twofa')">Turn on 2FA</button></div>`}
+  if(k==='quiz')return `${QUIZ.map((q,i)=>`<div style="margin:10px 0"><b class="small">${i+1}. ${esc(q.q)}</b>${q.a.map((a,j)=>`<label class="row" style="color:var(--text);margin:4px 0"><input type="radio" name="q${i}" value="${j}" style="width:auto"> ${esc(a)}</label>`).join('')}</div>`).join('')}<button class="btn sm" onclick="checkQuiz()">Submit answers</button>`;
+  if(k==='agreement')return `<div class="small" style="max-height:180px;overflow:auto;background:var(--bg);padding:10px;border-radius:8px;border:1px solid var(--line)">
+    <b>Lenfoz Seller Agreement</b><ul class="rules">
+    <li>I only sell items I own or have the legal right to resell.</li><li>I never sell stolen, cracked, phished, botted or chargeback-funded goods.</li>
+    <li>I never sell shared logins, "lifetime" subscriptions or bot members.</li><li>I keep every deal and every message on Lenfoz.</li>
+    <li>I accept escrow holds and moderator decisions on disputes.</li><li>Lenfoz can freeze my balance and report me to the platform owner or police if I commit fraud.</li>
+    <li>3 strikes means a permanent ban on my Lenfoz account, my ID and my devices.</li></ul></div>
+    <label>Type your full legal name to sign</label><input id="v-sign"><button class="btn sm" style="margin-top:10px" onclick="signAgreement()">Sign</button>`;
+}
+function sendCode(k){
+  if(k==='phone'){const n=val('v-phonenum').replace(/[\s()-]/g,'');if(!/^\+\d{8,15}$/.test(n)){toast('Enter a full number with country code, e.g. +15551234567');return}pendingCode.phoneNum=n}
+  const c=String(Math.floor(100000+Math.random()*900000));pendingCode[k]=c;
+  toast(`<b>Demo ${k==='email'?'inbox':k==='phone'?'SMS':'authenticator'}:</b> your Lenfoz code is <b>${c}</b>`,9000);
+}
+function checkCode(k){
+  if(!pendingCode[k]){toast('Request a code first.');return}
+  if(val('v-'+k)!==pendingCode[k]){toast('Wrong code.');return}
+  const u=me();u.seller.steps[k]=true;if(k==='phone')u.seller.phone=pendingCode.phoneNum;delete pendingCode[k];save();render();
+}
+function submitId(){
+  const u=me(),legal=val('v-legal'),dob=val('v-dob');
+  if(!/^[\p{L}'-]+(\s[\p{L}'-]+)+$/u.test(legal)){toast('Enter your first and last name as shown on your ID.');return}
+  if(!dob){toast('Enter your date of birth.');return}
+  const age=(now()-new Date(dob))/(365.25*864e5);if(age<18){toast('You must be 18 or older to sell on Lenfoz.');return}if(age>110){toast('Check your date of birth.');return}
+  if(!val('v-country')||!val('v-idtype')){toast('Choose your country and ID type.');return}
+  const files={};for(const f of ['idfront','idback','selfie','addr']){const el=document.getElementById('v-'+f);if(!el.files[0]){toast('Upload all 4 documents.');return}if(el.files[0].size<20e3){toast('One of the photos is too small to read. Upload a clear photo.');return}files[f]=el.files[0].name}
+  if(db.users.some(x=>x.id!==u.id&&x.seller.legal&&x.seller.legal.toLowerCase()===legal.toLowerCase()&&x.seller.dob===dob)){toast('This identity is already linked to another Lenfoz account. One seller account per person.');return}
+  Object.assign(u.seller,{legal,dob,country:val('v-country'),idType:val('v-idtype'),docs:files});u.seller.steps.id=true;save();render();
+}
+function checkQuiz(){
+  let right=0;QUIZ.forEach((q,i)=>{const p=document.querySelector(`input[name=q${i}]:checked`);if(p&&+p.value===q.c)right++});
+  if(right<QUIZ.length){toast(`You got ${right}/${QUIZ.length}. You need 5/5. Read the seller rules and try again.`);return}
+  me().seller.steps.quiz=true;save();render();
+}
+function signAgreement(){const u=me();if(val('v-sign').toLowerCase()!==(u.seller.legal||'').toLowerCase()){toast('The signature must match your legal name exactly.');return}u.seller.steps.agreement=true;u.seller.signedAt=now();save();render()}
+function submitApp(){const u=me();if((now()-u.created)<0){return}u.seller.status='pending';u.seller.submittedAt=now();save();toast('Application sent. A moderator will review it.');render()}
+
+/* ===================== Moderation ===================== */
+function viewAdmin(){
+  const tab=state.tab||'apps';
+  const apps=db.users.filter(u=>u.seller.status==='pending');
+  const pend=db.listings.filter(l=>l.status==='pending');
+  const disputes=db.orders.filter(o=>o.status==='disputed');
+  const reports=db.reports.filter(r=>r.open);
+  return `<h1>Moderation</h1><p class="muted">Every seller and every risky listing goes through here.</p>
+  <div class="tabs">${[['apps',`Seller applications (${apps.length})`],['listings',`Listing review (${pend.length})`],['disputes',`Disputes (${disputes.length})`],['reports',`Reports (${reports.length})`],['users','Users']].map(([k,n])=>`<button class="tab ${tab===k?'active':''}" onclick="state.tab='${k}';render()">${n}</button>`).join('')}</div>
+  ${tab==='apps'?(apps.length?apps.map(u=>{const s=u.seller;return `<div class="card" style="margin-bottom:12px"><h3>${esc(u.name)} <span class="muted small">${esc(u.email)}</span></h3>
+    <div class="grid g2 small"><div>Legal name: <b>${esc(s.legal)}</b><br>DOB: ${esc(s.dob)}<br>Country: ${esc(s.country)}<br>ID: ${esc(s.idType)}<br>Phone: ${esc(s.phone)}</div>
+    <div>Documents: ${Object.entries(s.docs||{}).map(([k,v])=>`<div>${k}: ${esc(v)}</div>`).join('')}Account age: ${Math.floor((now()-u.created)/864e5)} days</div></div>
+    <div class="notice small">Check: ID is real and not expired, selfie matches ID, paper shows "Lenfoz ${esc(u.name)}", address proof matches name, phone is not VoIP.</div>
+    <div class="row"><button class="btn ok sm" onclick="decideApp('${u.id}',true)">Approve (Tier 1)</button><input id="rj-${u.id}" placeholder="Rejection reason" style="max-width:260px"><button class="btn bad sm" onclick="decideApp('${u.id}',false)">Reject</button></div></div>`}).join(''):'<div class="card muted">No pending applications.</div>'):
+  tab==='listings'?(pend.length?pend.map(l=>`<div class="card" style="margin-bottom:12px"><h3>${esc(l.title)} <span class="pill">${CAT[l.cat].name}</span></h3>
+    <p class="small">${esc(l.desc)}</p><p class="small">Price ${money(l.price)} · Stock ${l.stock} · Seller ${esc(user(l.sellerId).name)} (Tier ${user(l.sellerId).seller.tier})</p>
+    <div class="small">Proof: ${Object.entries(l.proof).map(([k,v])=>`<div>${esc(k)}: ${esc(v)}</div>`).join('')||'none'}</div>
+    ${l.flags.length?`<div class="notice small">Auto flags: ${esc(l.flags.join('; '))}</div>`:''}
+    <div class="small">Delivery: <span class="secret">${esc(l.secret)}</span></div>
+    <div class="row" style="margin-top:10px"><button class="btn ok sm" onclick="decideListing('${l.id}',true)">Approve</button><input id="lr-${l.id}" placeholder="Rejection reason" style="max-width:260px"><button class="btn bad sm" onclick="decideListing('${l.id}',false)">Reject</button><button class="btn bad sm" onclick="decideListing('${l.id}',false,true)">Reject + strike</button></div></div>`).join(''):'<div class="card muted">No listings waiting.</div>'):
+  tab==='disputes'?(disputes.length?disputes.map(o=>`<div class="card" style="margin-bottom:12px"><h3>${esc(o.title)} · ${money(o.price)}</h3>
+    <p class="small">Buyer ${esc(user(o.buyerId).name)} vs seller ${esc(user(o.sellerId).name)}<br>Reason: <b>${esc(o.dispute.reason)}</b><br>${esc(o.dispute.text)}</p>
+    <div class="row"><button class="btn sm" onclick="resolve('${o.id}','refund')">Refund buyer</button><button class="btn bad sm" onclick="resolve('${o.id}','refund',true)">Refund + strike seller</button><button class="btn ghost sm" onclick="resolve('${o.id}','release')">Release to seller</button></div></div>`).join(''):'<div class="card muted">No open disputes.</div>'):
+  tab==='reports'?(reports.length?reports.map(r=>{const l=listing(r.listingId);return `<div class="card" style="margin-bottom:12px"><h3>${esc(l?.title||'Deleted listing')}</h3><p class="small">${esc(r.reason)} · ${esc(r.text)} · by ${esc(user(r.by)?.name)}</p>
+    <div class="row">${l?`<button class="btn bad sm" onclick="takeDown('${r.id}',true)">Remove listing + strike</button>`:''}<button class="btn ghost sm" onclick="takeDown('${r.id}',false)">Dismiss</button></div></div>`}).join(''):'<div class="card muted">No open reports.</div>'):
+  `<div class="card tablewrap"><table><tr><th>User</th><th>Seller status</th><th>Strikes</th><th></th></tr>${db.users.map(u=>`<tr><td>${esc(u.name)}<div class="small muted">${esc(u.email)}</div></td><td>${esc(u.seller.status)}${u.seller.tier?' · Tier '+u.seller.tier:''}</td><td>${u.seller.strikes||0}</td><td>${u.admin?'':u.banned?'<span class="pill bad">Banned</span>':`<button class="btn bad sm" onclick="ban('${u.id}','Banned by moderator')">Ban</button>`}</td></tr>`).join('')}</table></div>`}`;
+}
+function decideApp(id,ok){const u=user(id);if(ok){u.seller.status='approved';u.seller.tier=1;u.seller.approvedAt=now();toast('Seller approved.')}else{const r=val('rj-'+id);if(!r){toast('Give a reason.');return}u.seller.status='rejected';u.seller.rejectReason=r;u.seller.steps.id=false;u.seller.steps.agreement=false}save();render()}
+function decideListing(id,ok,strike){const l=listing(id);if(ok){l.status='live'}else{const r=val('lr-'+id);if(!r){toast('Give a reason.');return}l.status='rejected';l.rejectReason=r;if(strike)addStrike(l.sellerId)}save();render()}
+function resolve(id,act,strike){const o=db.orders.find(x=>x.id===id),s=user(o.sellerId),b=user(o.buyerId);
+  if(act==='refund'){o.status='refunded';b.wallet=+(b.wallet+o.price).toFixed(2);s.seller.pending=+(s.seller.pending-o.price*(1-FEE)).toFixed(2);if(strike)addStrike(s.id)}else release(o);
+  o.closedAt=now();save();render()}
+function takeDown(id,remove){const r=db.reports.find(x=>x.id===id);r.open=false;if(remove){const l=listing(r.listingId);if(l){l.status='rejected';l.rejectReason='Removed after report: '+r.reason;addStrike(l.sellerId)}}save();render()}
+function addStrike(sellerId){const s=user(sellerId);s.seller.strikes=(s.seller.strikes||0)+1;if(s.seller.strikes>=3)ban(sellerId,'3 strikes',true)}
+function ban(id,why,silent){const u=user(id);u.banned=why;u.seller.status='banned';db.listings.forEach(l=>{if(l.sellerId===id&&l.status==='live')l.status='paused'});
+  // Refund every open escrow order of a banned seller.
+  db.orders.forEach(o=>{if(o.sellerId===id&&(o.status==='escrow'||o.status==='disputed')){o.status='refunded';const b=user(o.buyerId);b.wallet=+(b.wallet+o.price).toFixed(2)}});
+  u.seller.pending=0;if(db.session===id)db.session=null;save();if(!silent)render()}
+
+/* ===================== Rules page ===================== */
+function viewRules(){
+  return `<h1>Seller verification & rules</h1><p class="muted">Lenfoz is strict on purpose. Buyers only trust a market where fraud gets caught fast.</p>
+  <div class="grid g2" style="margin-top:14px">
+  <div class="card"><h2>Who can sell</h2><ul class="rules">
+    <li>A Lenfoz account, 18+ years old.</li><li>Verified email and a real mobile number (no VoIP).</li>
+    <li>Government ID, a selfie holding the ID with "Lenfoz + your username" on paper, and proof of address.</li>
+    <li>Two-factor authentication turned on.</li><li>A perfect score on the rules test.</li><li>A signed seller agreement.</li>
+    <li>Manual approval by a Lenfoz moderator.</li><li>One seller account per person. Duplicate identities are blocked.</li></ul></div>
+  <div class="card"><h2>Seller tiers</h2><ul class="rules">
+    <li><b>Tier 1 (probation):</b> max ${T1_MAX_LISTINGS} active listings, max ${money(T1_MAX_PRICE)} per item, every listing reviewed by hand.</li>
+    <li><b>Tier 2 (trusted):</b> unlocked after ${T2_ORDERS} completed orders with zero refunds. Low-risk categories go live right away.</li>
+    <li>High-risk categories (accounts, Discord, streaming, gift cards) are always reviewed by hand, at every tier.</li></ul></div>
+  <div class="card"><h2>Always banned</h2><ul class="rules">
+    <li>Stolen, cracked, phished, "pulled" or checked accounts.</li><li>Shared logins, profiles, or "lifetime" Netflix and streaming accounts.</li>
+    <li>Bot members, self-bots, token joiners, OAuth member boosting.</li><li>Duped, hacked or exploited game items and currency.</li>
+    <li>Pirated or leaked ebooks, courses and assets.</li><li>Anything bought with stolen cards or chargebacks.</li><li>Moving deals off Lenfoz (Telegram, WhatsApp, DMs).</li></ul></div>
+  <div class="card"><h2>Enforcement</h2><ul class="rules">
+    <li>Listings with banned words are blocked automatically.</li><li>Gift cards and codes priced over 15% under face value are blocked.</li>
+    <li>Every order sits in escrow (24h for files, 72h for accounts and codes).</li><li>Each rule break is a strike. 3 strikes is a permanent ban.</li>
+    <li>A ban refunds every open order of that seller.</li><li>Payouts only go to an account in your verified legal name.</li></ul></div></div>
+  <h2 style="margin-top:22px">Category rules</h2><div class="grid g3">${CATS.map(c=>`<div class="card"><h3>${c.icon} ${c.name}</h3><ul class="rules small">${c.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ul><p class="small muted">Escrow: ${c.hold}h</p></div>`).join('')}</div>`;
+}
+
+/* ===================== Boot ===================== */
+(async()=>{if(!db)await seed();render();setInterval(()=>{if(db.orders.some(o=>o.status==='escrow'&&now()>=o.releaseAt))render()},30000)})();
+</script>
+</body>
+</html>
