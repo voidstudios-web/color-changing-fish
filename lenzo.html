@@ -12,37 +12,41 @@
 <style>
 /* Layout: sticky top bar, one centered column, market grid of listing cards, panels as tabbed workspaces. */
 :root{
-  --bg:#f4f5f9;--surface:#ffffff;--surface-2:#eceff5;--line:#dce0ea;--fg:#141824;--muted:#5b6377;
-  --accent:#2a46d8;--accent-2:#1f37b3;--accent-fg:#ffffff;
-  --ok:#1b8550;--warn:#a86200;--bad:#c53434;
-  --t1:#2a46d8;--t2:#0b8574;--t3:#b4501c;--t4:#7a3fb0;
+  --bg:#f6f4ff;--surface:#ffffff;--surface-2:#f1edff;--line:#e4def7;--fg:#1b1530;--muted:#665f80;
+  --accent:#ff3d81;--accent-2:#e3266b;--accent-fg:#ffffff;
+  --ok:#14a05c;--warn:#d97a00;--bad:#e5383b;
+  --t1:#ff3d81;--t2:#00b3a4;--t3:#ff8a00;--t4:#6c4cff;--t5:#1893f5;--t6:#e8a400;
+  --hero:linear-gradient(120deg,#ff3d81,#ff8a00 45%,#6c4cff);
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1118;--surface:#161a24;--surface-2:#1e2331;--line:#2b3244;--fg:#e8ebf2;--muted:#959eb2;
-  --accent:#8196ff;--accent-2:#a2b1ff;--accent-fg:#0e1118;--ok:#4cc98a;--warn:#f0ad4a;--bad:#f27474;
-  --t1:#8196ff;--t2:#3fd0bb;--t3:#f08a55;--t4:#c28af2;color-scheme:dark}}
+  --bg:#120f1f;--surface:#1c1830;--surface-2:#262041;--line:#342c55;--fg:#f3f0ff;--muted:#aaa2c8;
+  --accent:#ff5c98;--accent-2:#ff86b2;--accent-fg:#120f1f;--ok:#3ddc8a;--warn:#ffb340;--bad:#ff6b6e;
+  --t1:#ff5c98;--t2:#2fd9c8;--t3:#ffa033;--t4:#8f75ff;--t5:#4cb0ff;--t6:#ffcc33;
+  --hero:linear-gradient(120deg,#d92f6d,#e07400 45%,#5a3de0);color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0e1118;--surface:#161a24;--surface-2:#1e2331;--line:#2b3244;--fg:#e8ebf2;--muted:#959eb2;
-  --accent:#8196ff;--accent-2:#a2b1ff;--accent-fg:#0e1118;--ok:#4cc98a;--warn:#f0ad4a;--bad:#f27474;
-  --t1:#8196ff;--t2:#3fd0bb;--t3:#f08a55;--t4:#c28af2;color-scheme:dark}
+  --bg:#120f1f;--surface:#1c1830;--surface-2:#262041;--line:#342c55;--fg:#f3f0ff;--muted:#aaa2c8;
+  --accent:#ff5c98;--accent-2:#ff86b2;--accent-fg:#120f1f;--ok:#3ddc8a;--warn:#ffb340;--bad:#ff6b6e;
+  --t1:#ff5c98;--t2:#2fd9c8;--t3:#ffa033;--t4:#8f75ff;--t5:#4cb0ff;--t6:#ffcc33;
+  --hero:linear-gradient(120deg,#d92f6d,#e07400 45%,#5a3de0);color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--body)}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--hero)}
 a{color:var(--accent)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--hero);color:#fff}
 .bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-block:10px}
-.logo{font:800 21px/1 var(--display);letter-spacing:-.3px;display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:0;padding:0}
-.logo i{font-style:normal;display:grid;place-items:center;width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);font-size:16px}
+.logo{color:#fff;font:800 22px/1 var(--display);letter-spacing:-.3px;display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:0;padding:0}
+.logo i{font-style:normal;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fff;color:#ff3d81;font-size:17px}
 nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;align-items:center}
-.nav-btn{background:none;border:0;border-radius:7px;padding:7px 11px;cursor:pointer;color:var(--muted);font-weight:500}
-.nav-btn:hover{color:var(--fg);background:var(--surface-2)}
-.nav-btn[aria-current="page"]{color:var(--fg);background:var(--surface-2)}
+.nav-btn{background:none;border:0;border-radius:999px;padding:7px 14px;cursor:pointer;color:#fff;font-weight:600;opacity:.9}
+.nav-btn:hover{opacity:1;background:rgb(255 255 255 / .18)}
+.nav-btn[aria-current="page"]{opacity:1;background:#fff;color:#1b1530}
+header .btn{background:#fff;color:#1b1530}
 main{padding-block:22px 64px}
 h1,h2,h3{font-family:var(--display);text-wrap:balance;letter-spacing:-.2px;margin:0}
 h1{font-size:clamp(24px,4vw,34px);font-weight:800;line-height:1.1}
@@ -55,14 +59,14 @@ p{margin:0}
 .spacer{flex:1}
 .muted{color:var(--muted)}.small{font-size:13px}
 .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
-.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:999px;padding:10px 18px;cursor:pointer;font-weight:600;white-space:nowrap}
 .btn:hover{background:var(--accent-2)}
 .btn.ghost{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
 .btn.ghost:hover{background:var(--surface-2)}
 .btn.ok{background:var(--ok);color:#fff}.btn.bad{background:var(--bad);color:#fff}
 .btn.sm{padding:5px 11px;font-size:13px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
 .grid{display:grid;gap:14px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
 .g3{grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}
@@ -76,8 +80,12 @@ textarea{min-height:84px;resize:vertical}
 .check input{margin-top:4px}
 .pill{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;border:1px solid currentColor;line-height:1.5;white-space:nowrap}
 .pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--accent)}.pill.plain{color:var(--muted)}
-.hero{display:grid;gap:16px;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:end;padding-block:8px 18px;border-bottom:1px solid var(--line);margin-bottom:16px}
-.hero p{max-width:56ch}
+.hero{display:flex;flex-direction:column;gap:10px;background:var(--hero);color:#fff;border-radius:22px;padding:28px max(22px,4vw);margin-bottom:18px}
+.hero h1{font-size:clamp(28px,5vw,44px)}
+.hero .search input{border:0}
+.hero .search select{border:0}
+.hero input,.hero select{color:var(--fg);background:var(--surface)}
+.hero p{max-width:56ch;opacity:.92}
 .trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .trust div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .trust b{display:block;font:700 18px/1.2 var(--mono)}
@@ -87,14 +95,19 @@ textarea{min-height:84px;resize:vertical}
 .search select{flex:0 0 auto;width:auto}
 .cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin:14px 0 18px}
 .cat{white-space:nowrap;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;cursor:pointer;color:var(--muted);font-weight:500;font-size:14px}
-.cat[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.tile{display:grid;place-items:center;border-radius:9px;font:700 15px/1 var(--mono);letter-spacing:.04em;aspect-ratio:16/7;max-width:100%}
-.tile.t1{color:var(--t1);background:color-mix(in srgb,var(--t1) 13%,var(--surface))}
-.tile.t2{color:var(--t2);background:color-mix(in srgb,var(--t2) 13%,var(--surface))}
-.tile.t3{color:var(--t3);background:color-mix(in srgb,var(--t3) 13%,var(--surface))}
-.tile.t4{color:var(--t4);background:color-mix(in srgb,var(--t4) 13%,var(--surface))}
+.cat{border-color:color-mix(in srgb,var(--tone,var(--accent)) 45%,var(--line));color:var(--fg)}
+.cat[aria-pressed="true"]{background:var(--tone,var(--accent));color:#fff;border-color:transparent}
+.tile{display:grid;place-items:center;border-radius:14px;font:800 22px/1 var(--display);letter-spacing:.02em;aspect-ratio:16/7;max-width:100%;color:#fff;background:linear-gradient(135deg,var(--tone),color-mix(in srgb,var(--tone) 55%,#ffffff))}
+.t1{--tone:var(--t1)}
+.t2{--tone:var(--t2)}
+.t3{--tone:var(--t3)}
+.t4{--tone:var(--t4)}
+.t5{--tone:var(--t5)}
+.t6{--tone:var(--t6)}
+
 .item{display:flex;flex-direction:column;gap:9px;cursor:pointer;transition:border-color .15s}
-.item:hover{border-color:var(--accent)}
+.item{transition:transform .15s,border-color .15s}
+.item:hover{border-color:var(--tone);transform:translateY(-2px)}
 .item .title{font-weight:600;line-height:1.35}
 .price{font:700 19px/1 var(--mono);font-variant-numeric:tabular-nums}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
@@ -105,7 +118,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
 td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--tone,var(--accent));border-radius:14px;padding:12px 14px}
 .stat b{display:block;font:700 22px/1.25 var(--mono);font-variant-numeric:tabular-nums}
 .note{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 9%,var(--surface));padding:10px 14px;border-radius:6px;font-size:14px}
 .note.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 9%,var(--surface))}
@@ -171,7 +184,7 @@ const CATS=[
   {id:'courses',name:'Courses & Guides',code:'CG',hold:24,rules:['Original content only. No resold or leaked courses.'],
     proof:[{k:'portfolio',label:'Sample or preview link',type:'text'}]},
 ];
-const CAT=Object.fromEntries(CATS.map((c,i)=>[c.id,{...c,tone:'t'+(i%4+1)}]));
+const CAT=Object.fromEntries(CATS.map((c,i)=>[c.id,{...c,tone:'t'+(i%6+1)}]));
 const HIGH_RISK=['accounts','discord-accounts','discord-members','streaming','gift-cards'];
 const QUIZ=[
   {q:'A buyer asks you to finish the deal on Telegram to skip fees. What do you do?',a:['Agree, it saves money','Decline and keep the deal on Lenzo','Ask for a deposit first']},
@@ -242,10 +255,10 @@ async function loadMe(){
 function go(v,extra){view=v;S.tab=null;Object.assign(S,extra||{});render();window.scrollTo(0,0)}
 async function render(){
   const id=++renderId;
-  const links=[['market','Marketplace'],['rules','Seller rules']];
-  if(profile){links.push(['buyer','Buyer panel'],['seller','Seller panel']);if(profile.is_admin)links.push(['admin','Moderation'])}
+  const links=[['market','Shop'],['rules','Rules']];
+  if(profile){links.push(['buyer','My orders'],['seller','Sell']);if(profile.is_admin)links.push(['admin','Mod'])}
   $('nav').innerHTML=links.map(([k,n])=>`<button class="nav-btn" ${view===k?'aria-current="page"':''} onclick="go('${k}')">${n}</button>`).join('')+
-    (profile?`<button class="nav-btn" onclick="signOut()">Sign out</button>`:`<button class="btn sm" onclick="authModal('in')">Sign in with Lenzo</button>`);
+    (profile?`<button class="nav-btn" onclick="signOut()">Sign out</button>`:`<button class="btn sm" onclick="authModal('in')">Sign in</button>`);
   let html;
   try{
     if(['buyer','seller','admin'].includes(view)&&!profile)html=needLogin();
@@ -323,21 +336,19 @@ async function fetchListings(){
 function sortL(r){return [...r].sort(S.sort==='low'?(a,b)=>a.price-b.price:S.sort==='high'?(a,b)=>b.price-a.price:(a,b)=>b.created_at.localeCompare(a.created_at))}
 async function vMarket(){
   const items=await fetchListings();
-  return `<section class="hero"><div class="stack"><span class="label">Digital goods marketplace</span><h1>Buy from sellers who passed an ID check</h1>
-    <p class="muted">Every seller on Lenzo shows a government ID, turns on two-factor sign-in and gets approved by a moderator. Your money sits in escrow until you confirm the item works.</p></div>
-    <div class="trust"><div><b>6</b><span class="small muted">seller checks</span></div><div><b>72h</b><span class="small muted">escrow on accounts</span></div><div><b>3</b><span class="small muted">strikes to a ban</span></div></div></section>
+  return `<section class="hero"><h1>Buy and sell digital stuff</h1><p>Verified sellers. Your money is safe until it works.</p>
   <div class="search"><input id="q" placeholder="Search ebooks, gold, gift cards…" value="${esc(S.q)}" onkeydown="if(event.key==='Enter'){S.q=this.value.trim();render()}" aria-label="Search listings">
     <button class="btn" onclick="S.q=val('q');render()">Search</button>
     <select id="sort" onchange="S.sort=this.value;render()" aria-label="Sort">
-      <option value="new" ${S.sort==='new'?'selected':''}>Newest</option><option value="low" ${S.sort==='low'?'selected':''}>Price: low to high</option><option value="high" ${S.sort==='high'?'selected':''}>Price: high to low</option></select></div>
+      <option value="new" ${S.sort==='new'?'selected':''}>Newest</option><option value="low" ${S.sort==='low'?'selected':''}>Price: low to high</option><option value="high" ${S.sort==='high'?'selected':''}>Price: high to low</option></select></div></section>
   <div class="cats" role="group" aria-label="Categories"><button class="cat" aria-pressed="${S.cat==='all'}" onclick="S.cat='all';render()">All</button>
-    ${CATS.map(c=>`<button class="cat" aria-pressed="${S.cat===c.id}" onclick="S.cat='${c.id}';render()">${c.name}</button>`).join('')}</div>
+    ${CATS.map(c=>`<button class="cat ${CAT[c.id].tone}" aria-pressed="${S.cat===c.id}" onclick="S.cat='${c.id}';render()">${c.name}</button>`).join('')}</div>
   ${items.length?`<div class="grid g3">${items.map(card).join('')}</div>`:
     `<div class="panel stack" style="text-align:center;padding:36px"><h3>No listings here yet</h3><p class="muted">Verified sellers' items show up here once a moderator approves them.</p><div><button class="btn ghost" onclick="go('seller')">Start selling</button></div></div>`}`;
 }
 function card(l){
-  return `<article class="panel item" tabindex="0" onclick="go('item',{item:'${l.id}'})" onkeydown="if(event.key==='Enter')go('item',{item:'${l.id}'})">
-  ${tile(l.cat)}<span class="label">${CAT[l.cat].name}</span><div class="title">${esc(l.title)}</div>
+  return `<article class="panel item ${CAT[l.cat].tone}" tabindex="0" onclick="go('item',{item:'${l.id}'})" onkeydown="if(event.key==='Enter')go('item',{item:'${l.id}'})">
+  ${tile(l.cat)}<div class="title">${esc(l.title)}</div>
   <div class="small muted">by ${esc(l.seller?.name)}</div>
   <div class="row"><span class="price">${money(l.price)}</span><span class="spacer"></span>${tierPill(l.seller)}</div></article>`;
 }
@@ -399,9 +410,9 @@ async function vBuyer(){
     q(sb.from('reviews').select('order_id').eq('buyer_id',uid()))]);
   const rv=new Set(reviewed.map(r=>r.order_id));
   const spent=orders.filter(o=>o.status!=='refunded').reduce((a,o)=>a+ +o.price,0);
-  return `<div class="stack-lg"><div class="stack"><h1>Buyer panel</h1><p class="muted">Signed in as ${esc(profile.name)} · ${esc(session.user.email)}</p></div>
-  <div class="grid g4"><div class="stat"><span class="label">Wallet</span><b>${money(w.balance)}</b></div><div class="stat"><span class="label">Orders</span><b>${orders.length}</b></div>
-  <div class="stat"><span class="label">In escrow</span><b>${orders.filter(o=>o.status==='escrow').length}</b></div><div class="stat"><span class="label">Total spent</span><b>${money(spent)}</b></div></div>
+  return `<div class="stack-lg"><div class="stack"><h1>My orders</h1><p class="muted">Signed in as ${esc(profile.name)} · ${esc(session.user.email)}</p></div>
+  <div class="grid g4"><div class="stat t1"><span class="label">Wallet</span><b>${money(w.balance)}</b></div><div class="stat t2"><span class="label">Orders</span><b>${orders.length}</b></div>
+  <div class="stat t3"><span class="label">In escrow</span><b>${orders.filter(o=>o.status==='escrow').length}</b></div><div class="stat t4"><span class="label">Total spent</span><b>${money(spent)}</b></div></div>
   <div><div class="tabs" role="tablist">${[['orders','Orders'],['wallet','Wallet']].map(([k,n])=>`<button class="tab" role="tab" aria-selected="${tab===k}" onclick="S.tab='${k}';render()">${n}</button>`).join('')}</div>
   ${tab==='wallet'?`<div class="panel stack" style="max-width:480px"><h2>Add test funds</h2><p class="small muted">No real money moves yet. Connect a payment provider such as Stripe before launch. Test wallets are capped at $500.</p>
     <div class="row">${[10,25,50,100].map(a=>`<button class="btn ghost" onclick="addFunds(${a})">Add ${money(a)}</button>`).join('')}</div></div>`:
@@ -433,12 +444,12 @@ async function vSeller(){
     q(sb.from('listings').select('*').eq('seller_id',uid()).order('created_at',{ascending:false})),
     q(sb.from('orders').select('*,buyer:profiles!orders_buyer_id_fkey(name)').eq('seller_id',uid()).order('created_at',{ascending:false}))]);
   const t1=profile.seller_tier===1;
-  return `<div class="stack-lg"><div class="stack"><h1>Seller panel</h1>
+  return `<div class="stack-lg"><div class="stack"><h1>Sell on Lenzo</h1>
   <div class="row"><span class="pill ok">Verified seller</span>${t1?'<span class="pill warn">Tier 1 · Probation</span>':'<span class="pill ok">Tier 2 · Trusted</span>'}${app.strikes?`<span class="pill bad">${app.strikes} of 3 strikes</span>`:''}
   ${aal?.currentLevel!=='aal2'?'<span class="pill bad">Sign in with 2FA to list or withdraw</span>':''}</div></div>
   ${t1?`<div class="note">Probation limits: 3 active listings, $100 max per item, and a moderator checks every listing. Finish 10 orders with zero refunds to reach Tier 2. You have ${app.completed}.</div>`:''}
-  <div class="grid g4"><div class="stat"><span class="label">Ready to withdraw</span><b>${money(w.seller_available)}</b></div><div class="stat"><span class="label">In escrow</span><b>${money(w.seller_pending)}</b></div>
-  <div class="stat"><span class="label">Live listings</span><b>${mine.filter(l=>l.status==='live').length}</b></div><div class="stat"><span class="label">Completed orders</span><b>${app.completed}</b></div></div>
+  <div class="grid g4"><div class="stat t2"><span class="label">Ready to withdraw</span><b>${money(w.seller_available)}</b></div><div class="stat t3"><span class="label">In escrow</span><b>${money(w.seller_pending)}</b></div>
+  <div class="stat t4"><span class="label">Live listings</span><b>${mine.filter(l=>l.status==='live').length}</b></div><div class="stat t5"><span class="label">Completed orders</span><b>${app.completed}</b></div></div>
   <div><div class="tabs" role="tablist">${[['listings','My listings'],['new','New listing'],['orders','Sales'],['payout','Payouts']].map(([k,n])=>`<button class="tab" role="tab" aria-selected="${tab===k}" onclick="S.tab='${k}';render()">${n}</button>`).join('')}</div>
   ${tab==='new'?newListingForm():tab==='orders'?salesTable(orders):tab==='payout'?payoutView(w,app):listingsTable(mine)}</div></div>`;
 }
